@@ -146,6 +146,19 @@ git push -u origin main</pre>
 </div>
 
 <div class="card">
+  <h3>Remote Access (Android app)</h3>
+  <form hx-post="/settings/remote-access" hx-target="body" style="margin-top:4px;">
+    <label><input type="checkbox" name="enabled" style="width:auto;display:inline;" {% if settings.remote_access_enabled %}checked{% endif %}> Enable remote access via Tailscale</label>
+    <div class="muted" style="margin:8px 0;">
+      When enabled, a "Remote Access" section appears in each company's settings where you can generate a pairing code for the Android app.
+      Requires Tailscale to be installed and running — the Tailscale IP is used as the host address the Android app connects to.
+      Disabled by default; the rest of Looper works fully without it.
+    </div>
+    <button type="submit">Save</button>
+  </form>
+</div>
+
+<div class="card">
   <h3>Heartbeats Background Service</h3>
   <div class="muted">Platform: {{ svc_status.platform }} &middot; currently installed: {{ "yes" if svc_status.installed else "no" }}</div>
   <form hx-post="/settings/heartbeats-when-closed" hx-target="body" style="margin-top:8px;">

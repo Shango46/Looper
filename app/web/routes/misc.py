@@ -109,6 +109,17 @@ async def toggle_heartbeats_when_closed(enabled: bool = Form(False)):
     return RedirectResponse(f"/settings?service_log={urllib.parse.quote(log_msg[:1500])}", status_code=303)
 
 
+@router.post("/settings/remote-access")
+async def toggle_remote_access(enabled: bool = Form(False)):
+    async with session_scope() as session:
+        settings = await session.get(Settings, 1)
+        if not settings:
+            settings = Settings(id=1)
+            session.add(settings)
+        settings.remote_access_enabled = enabled
+    return RedirectResponse("/settings", status_code=303)
+
+
 @router.get("/settings/check-update")
 async def check_update(request: Request):
     local = get_local_version()

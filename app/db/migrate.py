@@ -16,6 +16,10 @@ CACHED_MODEL_COLUMNS = [
     ("modality", "VARCHAR(100)", "NULL"),
 ]
 
+SETTINGS_COLUMNS = [
+    ("remote_access_enabled", "BOOLEAN", "0"),
+]
+
 
 async def _migrate_table(conn, table: str, columns: list[tuple]) -> None:
     result = await conn.execute(text(f"PRAGMA table_info({table})"))
@@ -49,3 +53,4 @@ async def run_lightweight_migrations(engine: AsyncEngine) -> None:
                 )
 
         await _migrate_table(conn, "cached_models", CACHED_MODEL_COLUMNS)
+        await _migrate_table(conn, "settings", SETTINGS_COLUMNS)

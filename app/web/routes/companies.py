@@ -10,7 +10,7 @@ from app.agents.lifecycle import create_task_for_ceo as create_task_for_ceo_life
 from app.agents.lifecycle import hire_agent as hire_agent_lifecycle
 from app.config import MAX_COMPANIES
 from app.crypto import encrypt
-from app.db.models import Agent, AgentTemplate, CachedModel, Company, McpServer, Task
+from app.db.models import Agent, AgentTemplate, CachedModel, Company, McpServer, Settings, Task
 from app.db.session import session_scope
 from app.remote.auth import disable_remote_access, generate_code, rotate_code
 from app.remote.tailscale import get_tailscale_ip
@@ -185,14 +185,18 @@ async def company_settings(request: Request, company_id: int, new_code: str | No
         mcp_servers = (
             await session.execute(select(McpServer).where(McpServer.company_id == company_id))
         ).scalars().all()
+        global_settings = await session.get(Settings, 1)
+        remote_access_enabled = global_settings.remote_access_enabled if global_settings else False
+    tailscale_ip = get_tailscale_ip() if remote_access_enabled else None
     return templates.TemplateResponse(
         "company_settings.html",
         {
             "request": request,
             "company": company,
             "new_code": new_code,
-            "tailscale_ip": get_tailscale_ip(),
+            "tailscale_ip": tailscale_ip,
             "mcp_servers": mcp_servers,
+            "remote_access_enabled": remote_access_enabled,
         },
     )
 

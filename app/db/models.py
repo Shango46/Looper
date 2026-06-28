@@ -267,3 +267,4 @@ class Settings(Base):
     id: Mapped[int] = mapped_column(primary_key=True, default=1)
     heartbeats_run_when_closed: Mapped[bool] = mapped_column(default=False)
     background_service_installed: Mapped[bool] = mapped_column(default=False)
+    remote_access_enabled: Mapped[bool] = mapped_column(default=False)

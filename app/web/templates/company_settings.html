@@ -24,6 +24,7 @@
   </form>
 </div>
 
+{% if remote_access_enabled %}
 <div class="card">
   <h3>Remote Access (Android app)</h3>
   {% if new_code %}
@@ -59,6 +60,7 @@
   {% endif %}
   <div class="muted" style="margin-top:8px;">Regenerating or disabling the code immediately disconnects any phone currently connected to this company.</div>
 </div>
+{% endif %}
 
 <div class="card">
   <h3>MCP Servers</h3>
