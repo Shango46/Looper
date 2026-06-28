@@ -14,15 +14,13 @@ server.log
 # Playwright browser cache
 .playwright/
 
-# Android — source tracked, build artefacts and local config excluded
-android/app/build/
-android/.gradle/
-android/build/
-android/local.properties
+# Android — APK uploaded as GitHub Release asset; source kept local only
+android/
 *.apk
 *.aab
-# Release signing keystore — keep off GitHub (private key)
-android/looper-release.keystore
+
+# LinLoop — Linux Mint snapshot, not kept in sync; local only
+LinLoop/
 
 # Node / frontend build artefacts (if ever added)
 node_modules/
