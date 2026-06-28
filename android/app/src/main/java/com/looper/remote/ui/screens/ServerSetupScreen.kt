@@ -100,7 +100,7 @@ private fun tryConnect(url: String, callback: (String?) -> Unit) {
         callback("URL must start with http:// or https://")
         return
     }
-    if (!trimmed.contains(":", startIndex = 7)) {
+    if (trimmed.indexOf(":", 7) == -1) {
         callback("Include the port number, e.g. http://100.x.x.x:8731")
         return
     }
