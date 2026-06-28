@@ -21,6 +21,8 @@ android/build/
 android/local.properties
 *.apk
 *.aab
+# Release signing keystore — keep off GitHub (private key)
+android/looper-release.keystore
 
 # Node / frontend build artefacts (if ever added)
 node_modules/

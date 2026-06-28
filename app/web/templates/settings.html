@@ -63,6 +63,10 @@ git push -u origin main</pre>
     <input name="version" value="{{ next_version }}" placeholder="e.g. 0.0.2" required style="max-width:160px;">
     <label>Changelog (shown on the GitHub Release and to users checking for updates)</label>
     <textarea name="changelog" rows="6" placeholder="What's new in this release…&#10;&#10;- Feature A&#10;- Bug fix B"></textarea>
+    <label style="margin-top:10px;">Android APK version <span class="muted">(optional — version number displayed in the Android app, e.g. 0.0.2)</span></label>
+    <input name="apk_version" placeholder="e.g. 0.0.2" style="max-width:160px;">
+    <label style="margin-top:10px;">Android APK changelog <span class="muted">(optional — what changed in this version of the Android app)</span></label>
+    <textarea name="apk_changelog" rows="4" placeholder="What's new in the Android app…&#10;&#10;- New feature&#10;- Bug fix"></textarea>
     <label style="margin-top:10px;">Android APK path <span class="muted">(optional — uploads as a release asset so the Android app can self-update)</span></label>
     <input name="apk_path" placeholder="e.g. E:\AIDev\Hermes\Looper\android\app\build\outputs\apk\release\app-release.apk" style="font-size:12px;">
     <button type="submit" style="margin-top:10px;">Publish Release</button>

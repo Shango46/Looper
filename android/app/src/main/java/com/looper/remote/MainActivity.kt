@@ -1,11 +1,19 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 package com.looper.remote
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -13,69 +21,203 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import com.looper.remote.ui.screens.NoTailscaleScreen
-import com.looper.remote.ui.screens.ServerSetupScreen
-import com.looper.remote.ui.screens.WebViewScreen
+import androidx.core.content.ContextCompat
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.looper.remote.ui.Session
+import com.looper.remote.ui.screens.AddCompanyScreen
+import com.looper.remote.ui.screens.AgentChatScreen
+import com.looper.remote.ui.screens.AgentDetailScreen
+import com.looper.remote.ui.screens.AgentShopScreen
+import com.looper.remote.ui.screens.ApprovalsScreen
+import com.looper.remote.ui.screens.CompanyActivityScreen
+import com.looper.remote.ui.screens.CompanyHomeScreen
+import com.looper.remote.ui.screens.FileBrowserScreen
+import com.looper.remote.ui.screens.McpServersScreen
+import com.looper.remote.ui.screens.ModelsScreen
+import com.looper.remote.ui.screens.ReconnectScreen
+import com.looper.remote.ui.screens.SkillShopScreen
+import com.looper.remote.ui.screens.SettingsScreen
+import com.looper.remote.ui.screens.SkillsScreen
+import com.looper.remote.ui.screens.SwitcherScreen
+import com.looper.remote.ui.screens.TailscaleGateScreen
+import android.net.Uri
+import kotlinx.coroutines.delay
+
+data class DeepLinkTarget(val host: String, val companyId: Int)
 
 class MainActivity : ComponentActivity() {
+    private val notificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+            Session.syncPollingService(this)
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        Session.init(this)
+        AppTheme.isDark.value = ServerPrefs(this).darkMode
+        requestNotificationPermissionThenSync()
+
         setContent {
-            MaterialTheme {
+            val isDark by AppTheme.isDark
+            MaterialTheme(colorScheme = if (isDark) darkColorScheme() else lightColorScheme()) {
                 Surface(modifier = Modifier) {
-                    LooperRemoteApp()
+                    LooperRemoteApp(deepLinkFromIntent(intent))
                 }
             }
         }
     }
-}
 
-private sealed class Screen {
-    data object CheckingTailscale : Screen()
-    data object NoTailscale : Screen()
-    data object ServerSetup : Screen()
-    data class WebView(val url: String) : Screen()
+    override fun onResume() {
+        super.onResume()
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        ) {
+            Session.syncPollingService(this)
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        setContent {
+            val isDark by AppTheme.isDark
+            MaterialTheme(colorScheme = if (isDark) darkColorScheme() else lightColorScheme()) {
+                Surface(modifier = Modifier) {
+                    LooperRemoteApp(deepLinkFromIntent(intent))
+                }
+            }
+        }
+    }
+
+    private fun deepLinkFromIntent(intent: Intent?): DeepLinkTarget? {
+        val host = intent?.getStringExtra("deeplink_host") ?: return null
+        val companyId = intent.getIntExtra("deeplink_company_id", -1)
+        if (companyId < 0) return null
+        return DeepLinkTarget(host, companyId)
+    }
+
+    private fun requestNotificationPermissionThenSync() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val granted = ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+            if (granted) Session.syncPollingService(this)
+            else notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            Session.syncPollingService(this)
+        }
+    }
 }
 
 @Composable
-private fun LooperRemoteApp() {
-    val context = LocalContext.current
-    val prefs = remember { ServerPrefs(context) }
-    var screen by remember { mutableStateOf<Screen>(Screen.CheckingTailscale) }
+fun LooperRemoteApp(deepLink: DeepLinkTarget? = null) {
+    var tailscaleActive by remember { mutableStateOf(TailscaleDetector.isActive()) }
 
-    // Initial routing: check Tailscale, then decide where to send the user.
+    // Check for APK update in background
     LaunchedEffect(Unit) {
-        screen = resolveScreen(prefs)
+        delay(5_000)
+        // UpdateChecker runs passively; future: show a snackbar in SwitcherScreen
     }
 
-    when (val s = screen) {
-        Screen.CheckingTailscale -> {
-            // Blank surface while we check — typically sub-millisecond on device.
-        }
-
-        Screen.NoTailscale -> NoTailscaleScreen(
-            onRefresh = { screen = resolveScreen(prefs) },
-        )
-
-        Screen.ServerSetup -> ServerSetupScreen(
-            existingUrl = prefs.serverUrl,
-            onConnect = { url ->
-                prefs.serverUrl = url
-                screen = Screen.WebView(url)
-            },
-        )
-
-        is Screen.WebView -> WebViewScreen(
-            serverUrl = s.url,
-            onChangeServer = { screen = Screen.ServerSetup },
-        )
+    if (!tailscaleActive) {
+        TailscaleGateScreen(onRefresh = { tailscaleActive = TailscaleDetector.isActive() })
+        return
     }
+
+    LooperRemoteNavHost(deepLink)
 }
 
-private fun resolveScreen(prefs: ServerPrefs): Screen {
-    if (!TailscaleDetector.isActive()) return Screen.NoTailscale
-    val url = prefs.serverUrl ?: return Screen.ServerSetup
-    return Screen.WebView(url)
+@Composable
+fun LooperRemoteNavHost(deepLink: DeepLinkTarget? = null) {
+    val navController: NavHostController = rememberNavController()
+    var consumedDeepLink by remember { mutableStateOf(false) }
+
+    LaunchedEffect(deepLink) {
+        if (deepLink != null && !consumedDeepLink) {
+            consumedDeepLink = true
+            navController.navigate("approvals/${Uri.encode(deepLink.host)}/${deepLink.companyId}")
+        }
+    }
+
+    NavHost(navController = navController, startDestination = "switcher") {
+        composable("switcher") { SwitcherScreen(navController) }
+        composable("add") { AddCompanyScreen(navController) }
+        composable(
+            "reconnect/{host}/{companyId}",
+            arguments = listOf(navArgument("companyId") { type = NavType.IntType }),
+        ) {
+            ReconnectScreen(navController, it.arguments!!.getString("host")!!, it.arguments!!.getInt("companyId"))
+        }
+        composable(
+            "home/{host}/{companyId}",
+            arguments = listOf(navArgument("companyId") { type = NavType.IntType }),
+        ) {
+            CompanyHomeScreen(navController, it.arguments!!.getString("host")!!, it.arguments!!.getInt("companyId"))
+        }
+        composable(
+            "agent/{host}/{agentId}",
+            arguments = listOf(navArgument("agentId") { type = NavType.IntType }),
+        ) {
+            AgentDetailScreen(navController, it.arguments!!.getString("host")!!, it.arguments!!.getInt("agentId"))
+        }
+        composable(
+            "chat/{host}/{agentId}",
+            arguments = listOf(navArgument("agentId") { type = NavType.IntType }),
+        ) {
+            AgentChatScreen(navController, it.arguments!!.getString("host")!!, it.arguments!!.getInt("agentId"))
+        }
+        composable(
+            "activity/{host}/{companyId}",
+            arguments = listOf(navArgument("companyId") { type = NavType.IntType }),
+        ) {
+            CompanyActivityScreen(navController, it.arguments!!.getString("host")!!, it.arguments!!.getInt("companyId"))
+        }
+        composable(
+            "approvals/{host}/{companyId}",
+            arguments = listOf(navArgument("companyId") { type = NavType.IntType }),
+        ) {
+            ApprovalsScreen(navController, it.arguments!!.getString("host")!!, it.arguments!!.getInt("companyId"))
+        }
+        composable(
+            "skills/{host}/{companyId}",
+            arguments = listOf(navArgument("companyId") { type = NavType.IntType }),
+        ) {
+            SkillsScreen(navController, it.arguments!!.getString("host")!!, it.arguments!!.getInt("companyId"))
+        }
+        composable(
+            "files/{host}/{companyId}",
+            arguments = listOf(navArgument("companyId") { type = NavType.IntType }),
+        ) {
+            FileBrowserScreen(navController, it.arguments!!.getString("host")!!, it.arguments!!.getInt("companyId"))
+        }
+        composable(
+            "mcp/{host}/{companyId}",
+            arguments = listOf(navArgument("companyId") { type = NavType.IntType }),
+        ) {
+            McpServersScreen(navController, it.arguments!!.getString("host")!!, it.arguments!!.getInt("companyId"))
+        }
+        // New screens
+        composable(
+            "agent_shop/{host}/{companyId}",
+            arguments = listOf(navArgument("companyId") { type = NavType.IntType }),
+        ) {
+            AgentShopScreen(navController, it.arguments!!.getString("host")!!, it.arguments!!.getInt("companyId"))
+        }
+        composable(
+            "skill_shop/{host}/{companyId}",
+            arguments = listOf(navArgument("companyId") { type = NavType.IntType }),
+        ) {
+            SkillShopScreen(navController, it.arguments!!.getString("host")!!, it.arguments!!.getInt("companyId"))
+        }
+        composable(
+            "models/{host}/{companyId}",
+            arguments = listOf(navArgument("companyId") { type = NavType.IntType }),
+        ) {
+            ModelsScreen(navController, it.arguments!!.getString("host")!!, it.arguments!!.getInt("companyId"))
+        }
+        composable("settings") { SettingsScreen(navController) }
+    }
 }

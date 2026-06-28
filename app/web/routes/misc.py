@@ -147,6 +147,8 @@ async def check_update(request: Request):
 async def publish_release_route(
     version: str = Form(...),
     changelog: str = Form(""),
+    apk_version: str = Form(""),
+    apk_changelog: str = Form(""),
     apk_path: str = Form(""),
 ):
     if not IS_PUBLISHER:
@@ -154,7 +156,7 @@ async def publish_release_route(
     token = get_publisher_token()
     if not token:
         return RedirectResponse("/settings?publish_error=publisher.token+file+is+empty", status_code=303)
-    ok, msg = await publish_release(version.strip(), changelog.strip(), token, apk_path.strip() or None)
+    ok, msg = await publish_release(version.strip(), changelog.strip(), token, apk_path.strip() or None, apk_version.strip(), apk_changelog.strip())
     if ok:
         return RedirectResponse(f"/settings?publish_ok={urllib.parse.quote(msg)}", status_code=303)
     return RedirectResponse(f"/settings?publish_error={urllib.parse.quote(msg[:500])}", status_code=303)

@@ -15,6 +15,14 @@ async def list_models(company_id: int = Depends(get_authenticated_company_id)):
             await session.execute(select(CachedModel).order_by(CachedModel.supports_tools.desc(), CachedModel.name))
         ).scalars().all()
         return [
-            {"id": m.id, "name": m.name, "supports_tools": m.supports_tools, "context_length": m.context_length}
+            {
+                "id": m.id,
+                "name": m.name,
+                "supports_tools": m.supports_tools,
+                "context_length": m.context_length,
+                "pricing_prompt": m.pricing_prompt,
+                "pricing_completion": m.pricing_completion,
+                "modality": m.modality,
+            }
             for m in rows
         ]

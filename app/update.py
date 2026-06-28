@@ -74,7 +74,8 @@ def _run_git(args: list[str]) -> tuple[bool, str]:
 
 
 async def publish_release(
-    version: str, changelog: str, token: str, apk_path: str | None = None
+    version: str, changelog: str, token: str, apk_path: str | None = None,
+    apk_version: str = "", apk_changelog: str = "",
 ) -> tuple[bool, str]:
     if not has_git():
         return False, "Git repository not initialised. See the publisher setup steps in Settings."
@@ -98,7 +99,14 @@ async def publish_release(
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
     }
-    payload = {"tag_name": f"v{version}", "name": f"v{version}", "body": changelog, "target_commitish": "main"}
+    body = changelog
+    if apk_version or apk_changelog:
+        body += "\n\n---\n## Android App"
+        if apk_version:
+            body += f" v{apk_version}"
+        if apk_changelog:
+            body += f"\n{apk_changelog}"
+    payload = {"tag_name": f"v{version}", "name": f"v{version}", "body": body, "target_commitish": "main"}
     try:
         async with httpx.AsyncClient() as client:
             resp = await client.post(

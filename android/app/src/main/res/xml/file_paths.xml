@@ -2,4 +2,6 @@
 <paths>
     <!-- APK downloads stored in app-private external files directory -->
     <external-files-path name="apk_downloads" path="." />
+    <!-- Temp files for open-with intent (written to internal cache) -->
+    <cache-path name="cache_files" path="." />
 </paths>

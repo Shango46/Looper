@@ -14,4 +14,8 @@ class ServerPrefs(context: Context) {
     var skippedVersion: String?
         get() = p.getString("skip_version", null)
         set(v) = p.edit().putString("skip_version", v).apply()
+
+    var darkMode: Boolean
+        get() = p.getBoolean("dark_mode", false)
+        set(v) = p.edit().putBoolean("dark_mode", v).apply()
 }

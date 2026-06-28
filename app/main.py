@@ -7,6 +7,7 @@ from app.agents.browser import close_all_browsers
 from app.config import BASE_DIR
 from app.db.session import init_db
 from app.scheduler.heartbeats import start_heartbeat_scheduler, stop_heartbeat_scheduler
+from app.web.api import agent_templates as api_agent_templates
 from app.web.api import agents as api_agents
 from app.web.api import approvals as api_approvals
 from app.web.api import auth as api_auth
@@ -48,6 +49,7 @@ app.include_router(mcp.router)
 
 app.include_router(api_auth.router, prefix="/api/v1")
 app.include_router(api_me.router, prefix="/api/v1")
+app.include_router(api_agent_templates.router, prefix="/api/v1")
 app.include_router(api_agents.router, prefix="/api/v1")
 app.include_router(api_tasks.router, prefix="/api/v1")
 app.include_router(api_approvals.router, prefix="/api/v1")
