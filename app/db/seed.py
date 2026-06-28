@@ -33,7 +33,8 @@ _AGENT_MAP = {
     "LEGAL": ("Legal & Regulatory Agent", "Legal & Regulatory Liaison"),
     "MODEL ROUTER": ("Model Router Agent", "Prompt Optimizer"),
     "USER PERSONA": ("User Persona Agent", "Persona Simulator"),
-    "API INTEGRATION": ("API Integration Agent", "Integration Specialist"),
+    "API INTEGRATION":   ("API Integration Agent",    "Integration Specialist"),
+    "GRAPHICS DESIGNER": ("Graphics Designer Agent",  "Graphics Designer"),
 }
 
 
