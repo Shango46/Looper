@@ -73,7 +73,9 @@ def _run_git(args: list[str]) -> tuple[bool, str]:
         return False, str(exc)
 
 
-async def publish_release(version: str, changelog: str, token: str) -> tuple[bool, str]:
+async def publish_release(
+    version: str, changelog: str, token: str, apk_path: str | None = None
+) -> tuple[bool, str]:
     if not has_git():
         return False, "Git repository not initialised. See the publisher setup steps in Settings."
 
@@ -91,8 +93,7 @@ async def publish_release(version: str, changelog: str, token: str) -> tuple[boo
     if not ok:
         return False, f"git push failed: {log}"
 
-    url = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
-    headers = {
+    api_headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
@@ -100,11 +101,44 @@ async def publish_release(version: str, changelog: str, token: str) -> tuple[boo
     payload = {"tag_name": f"v{version}", "name": f"v{version}", "body": changelog, "target_commitish": "main"}
     try:
         async with httpx.AsyncClient() as client:
-            resp = await client.post(url, headers=headers, json=payload, timeout=30)
+            resp = await client.post(
+                f"https://api.github.com/repos/{GITHUB_REPO}/releases",
+                headers=api_headers,
+                json=payload,
+                timeout=30,
+            )
             data = resp.json()
-            if resp.status_code in (200, 201):
-                return True, data.get("html_url", f"v{version} published successfully")
-            return False, f"GitHub API {resp.status_code}: {data.get('message', resp.text[:200])}"
+            if resp.status_code not in (200, 201):
+                return False, f"GitHub API {resp.status_code}: {data.get('message', resp.text[:200])}"
+
+            release_url = data.get("html_url", f"v{version} published successfully")
+
+            # Upload APK asset if a path was provided
+            if apk_path:
+                from pathlib import Path
+                apk = Path(apk_path)
+                if apk.exists() and apk.suffix.lower() == ".apk":
+                    release_id = data["id"]
+                    upload_url = (
+                        f"https://uploads.github.com/repos/{GITHUB_REPO}"
+                        f"/releases/{release_id}/assets?name={apk.name}"
+                    )
+                    upload_headers = {
+                        **api_headers,
+                        "Content-Type": "application/vnd.android.package-archive",
+                    }
+                    up = await client.post(
+                        upload_url,
+                        headers=upload_headers,
+                        content=apk.read_bytes(),
+                        timeout=300,
+                    )
+                    if up.status_code not in (200, 201):
+                        return True, f"Release published but APK upload failed ({up.status_code}): {release_url}"
+                else:
+                    return True, f"Release published but APK not found at path '{apk_path}': {release_url}"
+
+            return True, release_url
     except Exception as exc:
         return False, f"GitHub API error: {exc}"
 

@@ -14,8 +14,11 @@ server.log
 # Playwright browser cache
 .playwright/
 
-# Android — entire folder excluded (APK distributed separately)
-android/
+# Android — source tracked, build artefacts and local config excluded
+android/app/build/
+android/.gradle/
+android/build/
+android/local.properties
 *.apk
 *.aab
 
