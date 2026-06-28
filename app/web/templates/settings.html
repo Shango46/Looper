@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Global Settings — Looper{% endblock %}
+
+{% block scripts %}
+<script>window.LOOPER_MODELS = {{ models_to_json(models) | safe }};</script>
+{% endblock %}
+
+{% block content %}
+<h2>Global Settings</h2>
+
+{% if refreshed is not none %}<div class="card" style="border-color:var(--ok);">Refreshed {{ refreshed }} models from OpenRouter.</div>{% endif %}
+{% if error %}<div class="card" style="border-color:var(--danger);">Refresh failed: {{ error }}</div>{% endif %}
+
+<!-- ── Version & Updates ─────────────────────────────────────────────── -->
+<div class="card">
+  <div class="flex-between" style="align-items:flex-start;">
+    <div>
+      <h3 style="margin:0;">Looper Version</h3>
+      <div class="muted" style="margin-top:4px;">Running <strong>v{{ local_version }}</strong></div>
+    </div>
+    <button type="button"
+            hx-get="/settings/check-update"
+            hx-target="#update-check-result"
+            hx-swap="innerHTML"
+            hx-indicator="#update-spinner">
+      Check for Updates
+    </button>
+  </div>
+  <span id="update-spinner" class="htmx-indicator muted" style="font-size:12px;">Checking…</span>
+  <div id="update-check-result"></div>
+  {% if restarting %}
+  <div style="color:var(--ok);margin-top:8px;font-weight:600;">Restarting — please wait a few seconds then refresh this page.</div>
+  {% endif %}
+  {% if update_ok %}
+  <div style="color:var(--ok);margin-top:8px;">{{ update_ok }}
+    <form method="post" action="/settings/update/restart" style="display:inline;margin-left:10px;">
+      <button type="submit">Restart Now</button>
+    </form>
+  </div>
+  {% endif %}
+  {% if update_error %}<div style="color:var(--danger);margin-top:8px;">Update failed: {{ update_error }}</div>{% endif %}
+</div>
+
+<!-- ── Publisher (this machine only) ────────────────────────────────── -->
+{% if is_publisher %}
+<div class="card">
+  <h3>Publish Release</h3>
+  <div class="muted" style="margin-bottom:10px;">Publishing commits all local changes, pushes to GitHub, and creates a GitHub Release. Other Looper installs can then detect and apply it via "Check for Updates".</div>
+  {% if not has_git %}
+  <div style="color:var(--danger);margin-bottom:10px;">
+    <strong>Git not initialised.</strong> Run these commands once in the Looper folder before publishing:
+  </div>
+  <pre class="code" style="margin-bottom:10px;">git init
+git remote add origin https://github.com/Shango46/Looper.git
+git add -A
+git commit -m "Initial commit"
+git push -u origin main</pre>
+  {% endif %}
+  {% if publish_ok %}<div style="color:var(--ok);margin-bottom:8px;">Published: <a href="{{ publish_ok }}" target="_blank">{{ publish_ok }}</a></div>{% endif %}
+  {% if publish_error %}<div style="color:var(--danger);margin-bottom:8px;">Publish failed: {{ publish_error }}</div>{% endif %}
+  <form method="post" action="/settings/publish" {% if not has_git %}style="opacity:0.5;pointer-events:none;"{% endif %}>
+    <label>Version number</label>
+    <input name="version" value="{{ next_version }}" placeholder="e.g. 0.0.2" required style="max-width:160px;">
+    <label>Changelog (shown on the GitHub Release and to users checking for updates)</label>
+    <textarea name="changelog" rows="6" placeholder="What's new in this release…&#10;&#10;- Feature A&#10;- Bug fix B"></textarea>
+    <button type="submit">Publish Release</button>
+  </form>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="flex-between" style="margin-bottom:12px;">
+    <div>
+      <h3 style="margin:0;">OpenRouter Model Catalog</h3>
+      <div class="muted" style="margin-top:4px;">
+        {{ models|length }} models cached
+        {% if models %}, refreshed {{ models[0].refreshed_at.strftime('%Y-%m-%d %H:%M UTC') }}{% endif %}
+        &mdash; {{ models|selectattr("supports_tools")|list|length }} support tool calling
+      </div>
+    </div>
+    <form hx-post="/settings/refresh-models" hx-target="body" style="flex:none;">
+      <button type="submit">Refresh Models</button>
+    </form>
+  </div>
+
+  {% if models %}
+  <div x-data="modelCatalog()">
+    <!-- filter pills -->
+    <div class="model-filter-row">
+      <template x-for="c in cats" :key="c.id">
+        <button type="button"
+                class="model-filter-pill"
+                :class="{ 'active': catFilter === c.id }"
+                @click="catFilter = c.id; search = ''"
+                x-text="c.label + ' (' + catCount(c.id) + ')'">
+        </button>
+      </template>
+    </div>
+    <!-- search -->
+    <input type="text" x-model="search" placeholder="Search by name or model ID..." style="margin-bottom:10px;">
+    <!-- results header -->
+    <div class="muted" style="margin-bottom:8px;font-size:12px;">
+      Showing <span x-text="filtered.length"></span> of <span x-text="totalFiltered"></span>
+      <span x-show="totalFiltered > 200"> &mdash; refine your filter or search to see more</span>
+    </div>
+    <!-- model list -->
+    <div style="max-height:500px;overflow-y:auto;">
+      <template x-for="m in filtered" :key="m.id">
+        <div class="model-catalog-entry">
+          <div class="flex-between">
+            <div>
+              <div class="model-catalog-name" x-text="m.name"></div>
+              <div class="model-catalog-id" x-text="m.id"></div>
+            </div>
+            <div class="model-catalog-meta" style="justify-content:flex-end;max-width:55%;">
+              <span class="badge"
+                    :class="'cat-' + m.cat"
+                    x-text="catLabel(m.cat)"></span>
+              <span class="badge price-tag" x-text="priceLabel(m)"></span>
+              <span class="badge" x-text="ctxLabel(m.ctx)" x-show="m.ctx > 0"></span>
+              <span class="badge active" x-show="m.tools">tools</span>
+              <span class="badge fired" x-show="!m.tools">no tools</span>
+            </div>
+          </div>
+        </div>
+      </template>
+      <div class="muted" x-show="filtered.length === 0" style="padding:8px 0;">No models match this filter.</div>
+    </div>
+  </div>
+  {% else %}
+  <div class="muted">No models cached yet. Click "Refresh Models" to fetch the OpenRouter catalog.</div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h3>Browser Automation Environment</h3>
+  <div class="muted">Platform: {{ env.platform }}</div>
+  <div>Google Chrome: {% if env.chrome_found %}<span class="badge active">found</span> {{ env.chrome_path }}{% else %}<span class="badge fired">not found</span>{% endif %}</div>
+  <div>Bundled Chromium fallback: {% if env.chromium_fallback_ready %}<span class="badge active">ready</span>{% else %}<span class="badge vacant">not installed</span>{% endif %}</div>
+  <div class="muted" style="margin:8px 0;">Looper prefers real Chrome (channel="chrome") for browser tools and automatically falls back to Playwright's own bundled Chromium if Chrome isn't found.</div>
+  {% if not env.chrome_found %}<pre class="code">{{ env.manual_install_hint }}</pre>{% endif %}
+  <form hx-post="/settings/run-setup" hx-target="body">
+    <button type="submit">Run Setup (installs bundled Chromium + Linux deps — no admin/sudo required)</button>
+  </form>
+  {% if setup_log %}<pre class="code" style="margin-top:8px;">{{ setup_log }}</pre>{% endif %}
+</div>
+
+<div class="card">
+  <h3>Heartbeats Background Service</h3>
+  <div class="muted">Platform: {{ svc_status.platform }} &middot; currently installed: {{ "yes" if svc_status.installed else "no" }}</div>
+  <form hx-post="/settings/heartbeats-when-closed" hx-target="body" style="margin-top:8px;">
+    <label><input type="checkbox" name="enabled" style="width:auto;display:inline;" {% if settings.heartbeats_run_when_closed %}checked{% endif %}> Keep heartbeats firing even when the app isn't open</label>
+    <div class="muted" style="margin:8px 0;">
+      Checking this installs a per-user background service that launches Looper headlessly at logon
+      ({{ "a Windows Scheduled Task" if svc_status.platform == "Windows" else "a Linux systemd --user unit" if svc_status.platform == "Linux" else "(unsupported on this OS)" }}),
+      so heartbeats keep firing even if you never open the app's browser tab. Unchecking it removes the service.
+    </div>
+    <button type="submit">Save</button>
+  </form>
+  {% if service_log %}<pre class="code" style="margin-top:8px;">{{ service_log }}</pre>{% endif %}
+</div>
+{% endblock %}

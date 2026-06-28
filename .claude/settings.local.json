@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:openrouter.ai)",
+      "WebSearch",
+      "Bash(kill %1)",
+      "Bash(rm -f data/looper.db data/secret.key)",
+      "Bash(rm -rf company_data/*)",
+      "PowerShell(Stop-Process *)",
+      "PowerShell(Start-Sleep -Seconds 3; try { $r = Invoke-WebRequest -Uri \"http://127.0.0.1:8731/settings\" -TimeoutSec 10 -UseBasicParsing; \"Status: $\\($r.StatusCode\\)\" } catch { \"Error: $_\" })",
+      "PowerShell($r = Invoke-WebRequest -Uri \"http://127.0.0.1:8731/\" -TimeoutSec 10 -UseBasicParsing; \"Status: $\\($r.StatusCode\\)\")",
+      "PowerShell($r = Invoke-WebRequest -Uri \"http://127.0.0.1:8731/companies/1\" -TimeoutSec 10 -UseBasicParsing; \"Status: $\\($r.StatusCode\\)\"; if \\($r.Content -match \"modelPicker\"\\) { \"modelPicker: found\" } else { \"modelPicker: MISSING\" }; if \\($r.Content -match \"LOOPER_MODELS\"\\) { \"LOOPER_MODELS: found\" } else { \"LOOPER_MODELS: MISSING\" })",
+      "PowerShell($r = Invoke-WebRequest -Uri \"http://127.0.0.1:8731/settings\" -TimeoutSec 10 -UseBasicParsing; \"Status: $\\($r.StatusCode\\)\"; if \\($r.Content -match \"modelCatalog\"\\) { \"modelCatalog: found\" } else { \"modelCatalog: MISSING\" }; if \\($r.Content -match \"LOOPER_MODELS\"\\) { \"LOOPER_MODELS: found\" } else { \"LOOPER_MODELS: MISSING\" }; if \\($r.Content -match \"model-filter-pill\"\\) { \"filter pills: found\" } else { \"filter pills: MISSING\" })",
+      "PowerShell($r = Invoke-WebRequest -Uri \"http://127.0.0.1:8731/agents/1\" -TimeoutSec 10 -UseBasicParsing; \"Status: $\\($r.StatusCode\\)\"; if \\($r.Content -match \"modelPicker\"\\) { \"modelPicker: found\" } else { \"modelPicker: MISSING\" })",
+      "Skill(claude-in-chrome)",
+      "PowerShell(Get-Process *)",
+      "Bash(main\\\\.py\")",
+      "PowerShell(Get-ChildItem -Path \"E:\\\\AIDev\\\\Hermes\\\\Looper\" -File | Where-Object {$_.Name -match \"run\\\\.py|main\\\\.py\"})",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8731/agents/shop)",
+      "Bash(.venv/Scripts/python.exe -c ' *)",
+      "Bash(.venv/Scripts/python.exe -c \"import app.update; import app.config; print\\('update ok'\\); print\\('IS_PUBLISHER:', app.config.IS_PUBLISHER\\); print\\('version file:', app.config.VERSION_FILE\\); print\\('local version:', app.update.get_local_version\\(\\)\\)\")",
+      "Bash(.venv/Scripts/python.exe -c \"import app.web.routes.misc; print\\('misc routes ok'\\)\")",
+      "Bash(Get-Process -Name python*)",
+      "Bash(Select-Object Id, ProcessName, CommandLine)",
+      "Bash(Format-List)",
+      "PowerShell(Get-NetTCPConnection *)",
+      "PowerShell(Start-Process -FilePath \"E:\\\\AIDev\\\\Hermes\\\\Looper\\\\.venv\\\\Scripts\\\\python.exe\" -ArgumentList \"run.py\" -WorkingDirectory \"E:\\\\AIDev\\\\Hermes\\\\Looper\" -WindowStyle Hidden; Write-Host \"Server started\")",
+      "PowerShell(Start-Sleep -Seconds 3; $conn = Get-NetTCPConnection -LocalPort 8731 -State Listen 2>$null; if \\($conn\\) { \"Listening on 8731 — PID $\\($conn.OwningProcess\\)\" } else { \"Not up yet\" })",
+      "Bash(python3 *)",
+      "Bash(E:/AIDev/Hermes/Looper/.venv/Scripts/python.exe *)",
+      "Bash(git rm *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Chat with {{ agent.name }} — Looper{% endblock %}
+{% block content %}
+<a href="/agents/{{ agent.id }}">&larr; Back to {{ agent.name }}</a>
+<h2>Chat with {{ agent.name }} <span class="muted">— {{ agent.title }}</span></h2>
+<p class="muted">A direct, off-the-record conversation — separate from the company's task queue. Use it for check-ins, performance reviews, or just to ask what they're working on. Counts toward their normal memory.</p>
+
+<div id="chat-page" {% if busy %}hx-get="/agents/{{ agent.id }}/chat" hx-trigger="every 3s" hx-select="#chat-page" hx-swap="outerHTML"{% endif %}>
+
+<div class="card" style="max-height:500px;overflow-y:auto;">
+  {% if task %}
+    {% for m in task.messages_json %}
+      {% if m.role in ('user', 'assistant') and m.content %}
+      <div class="log-entry">
+        <span class="role">{{ "you" if m.role == "user" else agent.name }}</span>
+        <div>{{ m.content }}</div>
+      </div>
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    <div class="muted">No conversation yet — say hello.</div>
+  {% endif %}
+  {% if busy %}<div class="muted">{{ agent.name }} is replying...</div>{% endif %}
+</div>
+
+<form method="post" action="/agents/{{ agent.id }}/chat" style="margin-top:12px;">
+  <textarea name="message" rows="2" placeholder="Say something to {{ agent.name }}..." required {% if busy %}disabled{% endif %}></textarea>
+  <button type="submit" {% if busy %}disabled{% endif %}>Send</button>
+</form>
+</div>
+{% endblock %}

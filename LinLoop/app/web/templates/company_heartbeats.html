@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Heartbeats — {{ company.name }}{% endblock %}
+{% block content %}
+<a href="/companies/{{ company.id }}">&larr; Back to {{ company.name }}</a>
+<h2>Heartbeats</h2>
+
+<div class="card">
+  <h3>New Heartbeat</h3>
+  <form method="post" action="/companies/{{ company.id }}/heartbeats" x-data="{ scheduleType: 'interval' }">
+    <label>Name</label>
+    <input name="name" required>
+
+    <label>Target agent (default: CEO)</label>
+    <select name="target_agent_id">
+      <option value="">CEO (default)</option>
+      {% for a in agents %}<option value="{{ a.id }}">{{ a.name }} — {{ a.title }}</option>{% endfor %}
+    </select>
+
+    <label>Schedule</label>
+    <select name="schedule_type" x-model="scheduleType">
+      <option value="interval">Repeating interval</option>
+      <option value="once">One-time, at a date/time</option>
+    </select>
+
+    <div x-show="scheduleType === 'interval'" class="row">
+      <input type="number" name="interval_value" min="1" value="60" placeholder="Every...">
+      <select name="interval_unit">
+        <option value="seconds">seconds</option>
+        <option value="minutes" selected>minutes</option>
+        <option value="hours">hours</option>
+        <option value="days">days</option>
+      </select>
+    </div>
+    <div x-show="scheduleType === 'once'">
+      <input type="datetime-local" name="once_at">
+    </div>
+
+    <label>Instruction (sent to the target agent when this fires)</label>
+    <textarea name="instruction_text" rows="3" required></textarea>
+
+    <button type="submit">Create Heartbeat</button>
+  </form>
+</div>
+
+{% for hb in heartbeats %}
+<div class="card">
+  <div class="flex-between">
+    <div>
+      <strong>{{ hb.name }}</strong>
+      <span class="badge {% if hb.enabled %}active{% else %}fired{% endif %}">{{ "enabled" if hb.enabled else "disabled" }}</span>
+      <span class="muted">&rarr; {{ agent_names.get(hb.agent_id, "CEO") if hb.agent_id else "CEO" }}</span>
+    </div>
+    <div class="row" style="flex:none;gap:6px;">
+      <form method="post" action="/heartbeats/{{ hb.id }}/toggle"><button type="submit" class="secondary">{{ "Disable" if hb.enabled else "Enable" }}</button></form>
+      <form method="post" action="/heartbeats/{{ hb.id }}/delete" onsubmit="return confirm('Delete this heartbeat?');"><button type="submit" class="danger">Delete</button></form>
+    </div>
+  </div>
+  <div class="muted" style="margin-top:6px;">
+    {% if hb.schedule_type == 'interval' %}Every {{ hb.schedule_value }}s{% else %}Once at {{ hb.schedule_value }}{% endif %}
+    &middot; next run: {{ hb.next_run_at.strftime("%Y-%m-%d %H:%M UTC") if hb.next_run_at else "—" }}
+    &middot; last run: {{ hb.last_run_at.strftime("%Y-%m-%d %H:%M UTC") if hb.last_run_at else "never" }}
+  </div>
+  <div style="margin-top:6px;">{{ hb.instruction_text }}</div>
+</div>
+{% else %}
+<div class="muted">No heartbeats yet.</div>
+{% endfor %}
+{% endblock %}

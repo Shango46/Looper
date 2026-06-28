@@ -1,0 +1,33 @@
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+
+# Looper data — never commit secrets or the database
+data/
+publisher.token
+server.log
+
+# Playwright browser cache
+.playwright/
+
+# Android build artefacts
+android/app/build/
+android/.gradle/
+android/build/
+*.apk
+*.aab
+
+# Node / frontend build artefacts (if ever added)
+node_modules/
+dist/
+
+# Archives
+LinLoop.zip
+
+# macOS / Windows desktop cruft
+.DS_Store
+Thumbs.db

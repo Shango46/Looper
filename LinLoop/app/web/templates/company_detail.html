@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}{{ company.name }} — Looper{% endblock %}
+
+{% macro render_agent(node, company, models) %}
+{% set agent = node.agent %}
+<div class="card" style="margin-bottom:10px;">
+  <div class="flex-between">
+    <div>
+      <a href="/agents/{{ agent.id }}"><strong>{{ agent.name }}</strong></a> — {{ agent.title }}
+      <span class="badge {{ agent.status }}">{{ agent.status }}</span>
+      {% if agent.model_id %}<span class="badge">{{ agent.model_id }}</span>{% endif %}
+    </div>
+    <div class="row" style="flex:none;gap:6px;">
+      {% if agent.status != 'fired' and node.active_child_count < 50 %}
+      <button class="secondary" onclick="document.getElementById('new-agent-modal-{{ agent.id }}').style.display='flex'">+ Hire under</button>
+      {% endif %}
+      {% if agent.status != 'fired' %}
+      <form hx-post="/agents/{{ agent.id }}/fire" hx-target="body" style="margin:0;" onsubmit="return confirm('Fire {{ agent.name }}?');">
+        <button type="submit" class="danger">Fire</button>
+      </form>
+      {% else %}
+      <button onclick="document.getElementById('replace-modal-{{ agent.id }}').style.display='flex'">Replace</button>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if node.children %}
+  <div class="tree">
+    {% for child in node.children %}
+      {{ render_agent(child, company, models) }}
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<div id="new-agent-modal-{{ agent.id }}" class="modal-backdrop" style="display:none;">
+  <div class="modal">
+    <h3>Hire under {{ agent.name }}</h3>
+    <form hx-post="/companies/{{ company.id }}/agents" hx-target="body">
+      <input type="hidden" name="parent_agent_id" value="{{ agent.id }}">
+      <label>Name</label><input name="name" required>
+      <label>Title</label><input name="title" required>
+      <label>Personality / soul</label><textarea name="personality" rows="3"></textarea>
+      <label>Model</label>
+      <select name="model_id" required>
+        <option value="" disabled selected>Select a model...</option>
+        {% for m in models %}
+        <option value="{{ m.id }}">{{ m.name }}{% if not m.supports_tools %} (no tool support){% endif %}</option>
+        {% endfor %}
+      </select>
+      <div class="row" style="margin-top:12px;">
+        <button type="submit">Hire</button>
+        <button type="button" class="secondary" onclick="document.getElementById('new-agent-modal-{{ agent.id }}').style.display='none'">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if agent.status == 'fired' %}
+<div id="replace-modal-{{ agent.id }}" class="modal-backdrop" style="display:none;">
+  <div class="modal">
+    <h3>Replace {{ agent.name }} ({{ agent.title }})</h3>
+    <form hx-post="/agents/{{ agent.id }}/replace" hx-target="body">
+      <label>New agent name</label><input name="name" required>
+      <label>Title</label><input name="title" value="{{ agent.title }}" required>
+      <label>Personality / soul</label><textarea name="personality" rows="3"></textarea>
+      <label>Model</label>
+      <select name="model_id" required>
+        <option value="" disabled selected>Select a model...</option>
+        {% for m in models %}
+        <option value="{{ m.id }}">{{ m.name }}</option>
+        {% endfor %}
+      </select>
+      <div class="row" style="margin-top:12px;">
+        <button type="submit">Replace</button>
+        <button type="button" class="secondary" onclick="document.getElementById('replace-modal-{{ agent.id }}').style.display='none'">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endmacro %}
+
+{% block content %}
+<div class="flex-between">
+  <h2>{{ company.name }} {% if company.paused %}<span class="badge fired">paused</span>{% endif %}</h2>
+  <div class="row" style="flex:none;gap:8px;">
+    {% if company.paused %}
+    <form method="post" action="/companies/{{ company.id }}/resume"><button type="submit">Resume company</button></form>
+    {% else %}
+    <form method="post" action="/companies/{{ company.id }}/pause" onsubmit="return confirm('Pause all work for {{ company.name }}? No new tasks will be processed until resumed.');"><button type="submit" class="secondary">Pause company</button></form>
+    {% endif %}
+    <a href="/">&larr; Back to companies</a>
+  </div>
+</div>
+<div class="muted">Folder: {{ company.folder_path }}</div>
+<div class="muted">Spend: ${{ "%.4f"|format(company.spend_usd_total) }}{% if company.budget_usd_cap %} / ${{ "%.2f"|format(company.budget_usd_cap) }} cap{% endif %} — <a href="/companies/{{ company.id }}/settings">manage</a></div>
+
+<div class="card" style="margin-top:16px;">
+  <h3>Instruct the company</h3>
+  <form hx-post="/companies/{{ company.id }}/instruct" hx-target="#instruct-result">
+    <textarea name="instruction" rows="3" placeholder="Tell the CEO what you need done..." required></textarea>
+    <button type="submit">Send to CEO</button>
+  </form>
+  <div id="instruct-result"></div>
+</div>
+
+<h3>Org Chart ({{ all_agents|length }}/50 agents)</h3>
+{% if tree %}
+  {{ render_agent(tree, company, models) }}
+{% else %}
+  <div class="muted">No CEO yet — this shouldn't happen for a created company.</div>
+{% endif %}
+
+<div class="row" style="margin-top:16px;">
+  <a class="card" href="/companies/{{ company.id }}/tasks" style="display:block;text-align:center;">Activity / Tasks</a>
+  <a class="card" href="/companies/{{ company.id }}/heartbeats" style="display:block;text-align:center;">Heartbeats</a>
+  <a class="card" href="/companies/{{ company.id }}/settings" style="display:block;text-align:center;">Company Settings</a>
+</div>
+{% endblock %}

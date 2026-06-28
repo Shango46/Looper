@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Skill Shop — Looper{% endblock %}
+{% block content %}
+<div class="flex-between" style="margin-bottom:16px;">
+  <h2>Skill Shop <span class="muted" style="font-size:16px;font-weight:400;">— {{ skills|length }} skills</span></h2>
+  <button onclick="document.getElementById('new-skill-modal').style.display='flex'">+ New Skill</button>
+</div>
+
+<p class="muted" style="margin-bottom:16px;">Skills published here can be granted to any agent across any company. Skills with custom tools always pause for your approval before execution.</p>
+
+{% if not skills %}
+<div class="card muted">No skills in the shop yet. Click "+ New Skill" to add one, or add skills via an agent's page and set visibility to "shop".</div>
+{% endif %}
+
+{% for s in skills %}
+<div class="card" style="margin-bottom:12px;">
+  <div class="flex-between" style="margin-bottom:6px;">
+    <div>
+      <strong style="font-size:15px;">{{ s.name }}</strong>
+      {% if s.custom_tool_source %}<span class="badge active" style="margin-left:8px;">has custom tool</span>{% endif %}
+    </div>
+    <div class="row" style="gap:6px;flex:none;">
+      <a href="/skills/{{ s.id }}/export" style="font-size:13px;color:var(--muted);text-decoration:none;padding:4px 8px;border:1px solid var(--border);border-radius:4px;">Export</a>
+      <button class="secondary" onclick="document.getElementById('edit-skill-{{ s.id }}').style.display='flex'">Edit</button>
+      <form method="post" action="/skills/{{ s.id }}/delete" style="margin:0;" onsubmit="return confirm('Delete skill &quot;{{ s.name }}&quot;? This will also revoke it from all agents.');">
+        <button type="submit" class="danger">Delete</button>
+      </form>
+    </div>
+  </div>
+
+  {% if s.description %}
+  <div class="muted" style="font-size:13px;margin-bottom:8px;">{{ s.description }}</div>
+  {% endif %}
+
+  {% if s.instructions_md %}
+  <details style="margin-bottom:10px;">
+    <summary class="muted" style="cursor:pointer;font-size:12px;user-select:none;">View instructions ({{ s.instructions_md|length }} chars)</summary>
+    <pre class="code" style="max-height:160px;overflow-y:auto;font-size:11px;white-space:pre-wrap;margin-top:6px;">{{ s.instructions_md[:800] }}{% if s.instructions_md|length > 800 %}…{% endif %}</pre>
+  </details>
+  {% endif %}
+
+  <form method="post" action="/skills/{{ s.id }}/grant" class="row" style="margin-top:4px;gap:8px;">
+    <select name="agent_id" required style="flex:1;">
+      <option value="" disabled selected>Grant to agent...</option>
+      {% for id, label in agent_options %}<option value="{{ id }}">{{ label }}</option>{% endfor %}
+    </select>
+    <button type="submit" style="flex:none;">Grant</button>
+  </form>
+</div>
+
+<!-- Edit Modal for {{ s.name }} -->
+<div id="edit-skill-{{ s.id }}" class="modal-backdrop" style="display:none;">
+  <div class="modal" style="width:640px;">
+    <h3>Edit: {{ s.name }}</h3>
+    <form method="post" action="/skills/{{ s.id }}/edit">
+      <label>Skill name</label>
+      <input name="name" value="{{ s.name }}" required>
+      <label>Description</label>
+      <input name="description" value="{{ s.description }}">
+      <label>Instructions (merged into the agent's system prompt when active)</label>
+      <textarea name="instructions_md" rows="9">{{ s.instructions_md }}</textarea>
+      <label>Custom tool Python source (optional — must define <code>run(args, company_folder)</code>)</label>
+      <textarea name="custom_tool_source" rows="6" placeholder="def run(args, company_folder):&#10;    return 'result'">{{ s.custom_tool_source or '' }}</textarea>
+      <label>Custom tool parameter schema (JSON Schema, optional)</label>
+      <textarea name="custom_tool_schema_json" rows="3" placeholder='{"type": "object", "properties": {}, "required": []}'>{% if s.custom_tool_schema_json %}{{ s.custom_tool_schema_json | tojson }}{% endif %}</textarea>
+      <div class="row" style="margin-top:12px;">
+        <button type="submit">Save</button>
+        <button type="button" class="secondary" onclick="document.getElementById('edit-skill-{{ s.id }}').style.display='none'">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endfor %}
+
+<!-- New Skill Modal -->
+<div id="new-skill-modal" class="modal-backdrop" style="display:none;">
+  <div class="modal" style="width:640px;">
+    <h3>New Shop Skill</h3>
+    <form method="post" action="/skills/shop/new">
+      <label>Skill name</label>
+      <input name="name" placeholder="e.g. Auditor - Output Validator" required>
+      <label>Description</label>
+      <input name="description" placeholder="Brief description of what this skill does">
+      <label>Instructions (merged into the agent's system prompt when active)</label>
+      <textarea name="instructions_md" rows="9" placeholder="# SKILL NAME&#10;&#10;## 1. Section&#10;* Rule one&#10;* Rule two"></textarea>
+      <label>Custom tool Python source (optional — must define <code>run(args, company_folder)</code>)</label>
+      <textarea name="custom_tool_source" rows="6" placeholder="def run(args, company_folder):&#10;    return 'result'"></textarea>
+      <label>Custom tool parameter schema (JSON Schema, optional)</label>
+      <textarea name="custom_tool_schema_json" rows="3" placeholder='{"type": "object", "properties": {}, "required": []}'></textarea>
+      <div class="row" style="margin-top:12px;">
+        <button type="submit">Create Skill</button>
+        <button type="button" class="secondary" onclick="document.getElementById('new-skill-modal').style.display='none'">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

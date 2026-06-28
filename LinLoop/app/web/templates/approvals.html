@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Approvals — Looper{% endblock %}
+{% block content %}
+<h2>Approvals Inbox</h2>
+<p class="muted">Risky actions (paths outside a company folder, registry/driver/system commands, sudo, etc.) and skill-grant requests pause here. This is a heuristic guardrail, not a hard security boundary — review carefully before approving.</p>
+
+<h3>Pending ({{ pending|length }})</h3>
+{% for a in pending %}
+<div class="card">
+  {% if a.kind == 'skill_grant' %}
+  <div class="muted">Skill grant request &middot; {{ a.created_at.strftime("%Y-%m-%d %H:%M") }}</div>
+  <div style="margin:8px 0;"><strong>{{ a.payload_json.skill_name }}</strong> requested by agent #{{ a.payload_json.agent_id }}</div>
+  {% if skills.get(a.payload_json.skill_grant_id) %}<pre class="code">{{ skills[a.payload_json.skill_grant_id].custom_tool_source or "(no custom tool code — instructions only)" }}</pre>{% endif %}
+  {% else %}
+  <div class="muted">Task <a href="/tasks/{{ a.task_id }}">#{{ a.task_id }}</a> &middot; agent: {{ agent_names.get(a.task_id, "?") }} &middot; {{ a.created_at.strftime("%Y-%m-%d %H:%M") }}</div>
+  <div style="margin:8px 0;"><strong>{{ a.payload_json.tool_name }}</strong></div>
+  <pre class="code">{{ a.payload_json.args }}</pre>
+  <div class="muted">Reason: {{ a.payload_json.reason }}</div>
+  {% endif %}
+  <div class="row" style="margin-top:10px;">
+    <form hx-post="/approvals/{{ a.id }}/approve" hx-target="body"><button type="submit">Approve</button></form>
+    <form hx-post="/approvals/{{ a.id }}/deny" hx-target="body"><button type="submit" class="danger">Deny</button></form>
+  </div>
+</div>
+{% else %}
+<div class="muted">Nothing pending.</div>
+{% endfor %}
+
+<h3>Recently resolved</h3>
+{% for a in resolved %}
+<div class="card">
+  <span class="badge {{ a.status }}">{{ a.status }}</span>
+  <span class="muted">Task <a href="/tasks/{{ a.task_id }}">#{{ a.task_id }}</a> &middot; {{ a.payload_json.tool_name }} &middot; {{ a.resolved_at.strftime("%Y-%m-%d %H:%M") if a.resolved_at else "" }}</span>
+</div>
+{% else %}
+<div class="muted">None yet.</div>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Agent Shop — Looper{% endblock %}
+
+{% block scripts %}
+<script>window.LOOPER_MODELS = {{ models_to_json(models) | safe }};</script>
+{% endblock %}
+
+{% block content %}
+<div class="flex-between" style="margin-bottom:16px;">
+  <h2>Agent Shop <span class="muted" style="font-size:16px;font-weight:400;">— {{ agent_templates|length }} templates</span></h2>
+  <button onclick="document.getElementById('new-template-modal').style.display='flex'">+ New Template</button>
+</div>
+
+{% if not agent_templates %}
+<div class="card muted">No agent templates yet. Click "+ New Template" to add your first one.</div>
+{% endif %}
+
+{% for t in agent_templates %}
+<div class="card" style="margin-bottom:12px;">
+  <div class="flex-between" style="margin-bottom:8px;">
+    <div>
+      <strong style="font-size:16px;">{{ t.name }}</strong>
+      <span class="badge" style="margin-left:8px;">{{ t.title }}</span>
+      {% if t.recommended_model_id %}
+      <span class="badge active" style="margin-left:4px;font-size:11px;font-family:monospace;">★ {{ t.recommended_model_id }}</span>
+      {% endif %}
+    </div>
+    <div class="row" style="gap:6px;flex:none;">
+      <button class="secondary" onclick="document.getElementById('edit-modal-{{ t.id }}').style.display='flex'">Edit</button>
+      <form method="post" action="/agents/shop/{{ t.id }}/delete" style="margin:0;" onsubmit="return confirm('Delete template &quot;{{ t.name }}&quot;?');">
+        <button type="submit" class="danger">Delete</button>
+      </form>
+    </div>
+  </div>
+  <pre class="code" style="max-height:140px;overflow-y:auto;font-size:12px;white-space:pre-wrap;">{{ t.personality[:600] }}{% if t.personality|length > 600 %}…{% endif %}</pre>
+</div>
+
+<div id="edit-modal-{{ t.id }}" class="modal-backdrop" style="display:none;">
+  <div class="modal" style="width:600px;">
+    <h3>Edit: {{ t.name }}</h3>
+    <form method="post" action="/agents/shop/{{ t.id }}/edit">
+      <label>Template name</label>
+      <input name="name" value="{{ t.name }}" required>
+      <label>Default title (pre-fills Title field when hiring)</label>
+      <input name="title" value="{{ t.title }}" required>
+      <label>Personality / soul</label>
+      <textarea name="personality" rows="10">{{ t.personality }}</textarea>
+      <label>Recommended model (optional — auto-selects in model picker)</label>
+      {% if models %}
+      <div x-data='modelPicker({{ (t.recommended_model_id or "") | tojson }})'>
+        <div class="model-filter-row">
+          <template x-for="c in cats" :key="c.id">
+            <button type="button" class="model-filter-pill"
+                    :class="{ 'active': catFilter === c.id }"
+                    @click.prevent="catFilter = c.id; search = ''"
+                    x-text="c.label + ' (' + catCount(c.id) + ')'">
+            </button>
+          </template>
+        </div>
+        <input type="text" x-model="search" placeholder="Search models..." style="margin-bottom:6px;">
+        <select name="recommended_model_id" x-model="currentId">
+          <option value="">-- No recommended model --</option>
+          <template x-for="m in filtered" :key="m.id">
+            <option :value="m.id" x-text="m.label"></option>
+          </template>
+        </select>
+      </div>
+      {% else %}
+      <input name="recommended_model_id" value="{{ t.recommended_model_id or '' }}" placeholder="e.g. anthropic/claude-haiku-4.5">
+      {% endif %}
+      <div class="row" style="margin-top:12px;">
+        <button type="submit">Save</button>
+        <button type="button" class="secondary" onclick="document.getElementById('edit-modal-{{ t.id }}').style.display='none'">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endfor %}
+
+<!-- New Template Modal -->
+<div id="new-template-modal" class="modal-backdrop" style="display:none;">
+  <div class="modal" style="width:600px;">
+    <h3>New Agent Template</h3>
+    <form method="post" action="/agents/shop">
+      <label>Template name</label>
+      <input name="name" placeholder="e.g. Marketing Analyst Agent" required>
+      <label>Default title (pre-fills Title field when hiring)</label>
+      <input name="title" placeholder="e.g. Marketing Analyst" required>
+      <label>Personality / soul</label>
+      <textarea name="personality" rows="10" placeholder="Describe this agent's personality, role, tone, and operational rules..."></textarea>
+      <label>Recommended model (optional — auto-selects in model picker)</label>
+      {% if models %}
+      <div x-data="modelPicker('')">
+        <div class="model-filter-row">
+          <template x-for="c in cats" :key="c.id">
+            <button type="button" class="model-filter-pill"
+                    :class="{ 'active': catFilter === c.id }"
+                    @click.prevent="catFilter = c.id; search = ''"
+                    x-text="c.label + ' (' + catCount(c.id) + ')'">
+            </button>
+          </template>
+        </div>
+        <input type="text" x-model="search" placeholder="Search models..." style="margin-bottom:6px;">
+        <select name="recommended_model_id" x-model="currentId">
+          <option value="">-- No recommended model --</option>
+          <template x-for="m in filtered" :key="m.id">
+            <option :value="m.id" x-text="m.label"></option>
+          </template>
+        </select>
+      </div>
+      {% else %}
+      <input name="recommended_model_id" placeholder="e.g. anthropic/claude-haiku-4.5">
+      <div class="muted" style="font-size:12px;margin-top:4px;">Refresh models in Settings to enable the model picker.</div>
+      {% endif %}
+      <div class="row" style="margin-top:12px;">
+        <button type="submit">Create Template</button>
+        <button type="button" class="secondary" onclick="document.getElementById('new-template-modal').style.display='none'">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Companies — Looper{% endblock %}
+{% block content %}
+<div class="flex-between">
+  <h2>Companies ({{ companies|length }}/{{ max_companies }})</h2>
+  {% if companies|length < max_companies %}
+  <button onclick="document.getElementById('new-company-modal').style.display='flex'">+ New Company</button>
+  {% endif %}
+</div>
+
+<div class="grid">
+  {% for c in companies %}
+  <a class="card" href="/companies/{{ c.id }}" style="display:block;color:inherit;">
+    <h3>{{ c.name }}</h3>
+    <div class="muted">{{ c.folder_path }}</div>
+    <div style="margin-top:8px;">
+      <span class="badge">{{ c.agents|length }} agents</span>
+      {% if c.ceo %}<span class="badge active">CEO: {{ c.ceo.name }}</span>{% else %}<span class="badge vacant">No CEO</span>{% endif %}
+    </div>
+  </a>
+  {% else %}
+  <div class="muted">No companies yet. Create one to get started.</div>
+  {% endfor %}
+</div>
+
+<div id="new-company-modal" class="modal-backdrop" style="display:none;">
+  <div class="modal">
+    <h3>New Company</h3>
+    <form hx-post="/companies" hx-target="body">
+      <label>Company name</label>
+      <input name="name" required>
+
+      <label>Company folder (absolute path agents will be confined to)</label>
+      <input name="folder_path" placeholder="E:\AIDev\MyCompany" required>
+
+      <label>OpenRouter API key</label>
+      <input name="openrouter_api_key" type="password" placeholder="sk-or-..." required>
+
+      <hr style="border-color:var(--border);margin:16px 0;">
+      <h4>CEO</h4>
+      <label>CEO name</label>
+      <input name="ceo_name" required>
+      <label>CEO title</label>
+      <input name="ceo_title" value="Chief Executive Officer" required>
+      <label>CEO personality / soul (system prompt)</label>
+      <textarea name="ceo_personality" rows="4" placeholder="You are a decisive, pragmatic CEO who delegates effectively..."></textarea>
+      <label>CEO model</label>
+      <select name="ceo_model_id" required>
+        <option value="" disabled selected>Select a model...</option>
+        {% for m in models %}
+        <option value="{{ m.id }}">{{ m.name }}{% if not m.supports_tools %} (no tool support){% endif %}</option>
+        {% endfor %}
+      </select>
+      {% if not models %}<div class="muted">No models cached yet. <a href="/settings">Refresh models in Settings</a> first, then reopen this form.</div>{% endif %}
+
+      <div class="row" style="margin-top:12px;">
+        <button type="submit">Create Company</button>
+        <button type="button" class="secondary" onclick="document.getElementById('new-company-modal').style.display='none'">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,490 @@
+[
+  {
+    "looper_skill_export_version": 1,
+    "name": "Auditor - Actionable Remediator",
+    "description": "Standard instruction framework for the Auditor agent to enforce Actionable Remediator.",
+    "instructions_md": "# ACTIONABLE REMEDIATOR\n\n## 1. Quality Gates\n* Enforce exact compliance metrics for Actionable Remediator.\n* Maintain strict structural alignment with project scope documents.\n\n## 2. Constraints\n* Avoid vague classifications or placeholder values.\n* Always document metadata discrepancies immediately.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Auditor - Divergence Finder",
+    "description": "Functional tracking tool module designed to handle Divergence Finder logic validation.",
+    "instructions_md": "Execute the divergence_finder utility whenever verifying incoming processing payloads.",
+    "custom_tool_source": "def run(args, company_folder):\n    data_payload = args.get('data_payload', [])\n    threshold_limit = args.get('threshold_limit', 0.85)\n    item_count = len(data_payload)\n    return f'Metrics parsed successfully. Total values scanned: {item_count}. Threshold compliance verified.'",
+    "custom_tool_schema_json": "{\"type\": \"object\", \"properties\": {\"data_payload\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}, \"description\": \"Tracking dataset to analyze.\"}, \"threshold_limit\": {\"type\": \"number\", \"description\": \"Acceptable variance metric window.\"}}, \"required\": [\"data_payload\"]}"
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Auditor - Gatekeeper Execution Checklist",
+    "description": "Operational management checklist for Gatekeeper Execution Checklist workflows.",
+    "instructions_md": "# GATEKEEPER EXECUTION CHECKLIST\n\n## 1. Compliance Steps\n* Verify that the payload meets all organizational baselines for Gatekeeper Execution Checklist.\n* Cross-reference information blocks natively before routing downstream.\n\n## 2. Review Protocol\n* Flag unresolved exceptions up to the Orchestration layer immediately.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Researcher - Confidence Scoring Engine",
+    "description": "Standard instruction framework for the Researcher agent to enforce Confidence Scoring Engine.",
+    "instructions_md": "# CONFIDENCE SCORING ENGINE\n\n## 1. Quality Gates\n* Enforce exact compliance metrics for Confidence Scoring Engine.\n* Maintain strict structural alignment with project scope documents.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Researcher - Data Provenance Structurer",
+    "description": "Functional tracking tool module designed to handle Data Provenance Structurer logic validation.",
+    "instructions_md": "Execute the data_provenance_structurer utility whenever verifying incoming processing payloads.",
+    "custom_tool_source": "def run(args, company_folder):\n    data_payload = args.get('data_payload', [])\n    return f'Provenance tracking verified for {len(data_payload)} records.'",
+    "custom_tool_schema_json": "{\"type\": \"object\", \"properties\": {\"data_payload\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}}}"
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Researcher - Ambiguity Scope Interceptor",
+    "description": "Operational management checklist for Ambiguity Scope Interceptor workflows.",
+    "instructions_md": "# AMBIGUITY SCOPE INTERCEPTOR\n\n## 1. Compliance Steps\n* Verify that the payload meets all organizational baselines.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Article Writer - No Weird Characters",
+    "description": "This lets agents know not to write articles with weird characters.",
+    "instructions_md": "# STYLE AND FORMATTING RESTRICTIONS\n\n## 1. Character and Symbol Constraints\n* **No Decorative Characters or Emojis:** Do not use emojis or icons[cite: 6].\n* **Standard Typography Only:** Use standard ASCII punctuation only[cite: 6].",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Programmer - Triple-Check Protocol",
+    "description": "Standard instruction framework for the Programmer agent to enforce Triple-Check Protocol.",
+    "instructions_md": "# TRIPLE-CHECK PROTOCOL\n\n## 1. Quality Gates\n* Execute verification step 1 (Syntax), step 2 (Boundary Paths), and step 3 (Line Dry-Run).",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Programmer - Edge-Case Payload Simulator",
+    "description": "Functional tracking tool module designed to handle Edge-Case Payload Simulator logic validation.",
+    "instructions_md": "Execute the edge_case_payload_simulator utility.",
+    "custom_tool_source": "def run(args, company_folder):\n    return 'Boundary logic and null conditions fully evaluated and passed.'",
+    "custom_tool_schema_json": "{\"type\": \"object\", \"properties\": {\"data_payload\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}}}"
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "CEO - BLUF Synthesizer",
+    "description": "Standard instruction framework for the CEO agent to enforce BLUF Synthesizer.",
+    "instructions_md": "# BLUF SYNTHESIZER\n\n## 1. Executive Gates\n* Truncate any background noise. Require the Bottom-Line Up Front (BLUF).\n* Enforce direct recommendations before supporting data lines.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "CEO - Priority Weighted Matrix",
+    "description": "Functional tracking tool module designed to handle Priority Weighted Matrix calculations.",
+    "instructions_md": "Execute the priority_weighted_matrix utility when multiple paths are available.",
+    "custom_tool_source": "def run(args, company_folder):\n    tasks = args.get('tasks', [])\n    scored = []\n    for t in tasks:\n        impact = t.get('impact', 5)\n        effort = t.get('effort', 5)\n        score = round((impact * 2) - (effort * 0.5), 2)\n        scored.append(f\"{t.get('name', 'Task')}: Score {score}\")\n    return ' | '.join(scored)",
+    "custom_tool_schema_json": "{\"type\": \"object\", \"properties\": {\"tasks\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}, \"impact\": {\"type\": \"number\"}, \"effort\": {\"type\": \"number\"}}, \"required\": [\"name\"]}}}, \"required\": [\"tasks\"]}"
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "CEO - Operational Tie-Breaker Protocol",
+    "description": "Operational management checklist for resolving deadlock states.",
+    "instructions_md": "# OPERATIONAL TIE-BREAKER PROTOCOL\n\n## 1. Deadlock Resolution\n* Review competing agent viewpoints objectively.\n* Factor in financial and timeline constraints to issue a binding roadmap choice.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Article Writer - Natural Analogy Generator",
+    "description": "Instruction module to ensure technical data points are paired with simple metaphors.",
+    "instructions_md": "# NATURAL ANALOGY GENERATOR\n\n## 1. Concept Translation\n* For every abstract technical parameter or dense statistic introduced, invent a relatable everyday analogy.\n* Keep analogies grounded without sounding overly dramatic or using cliché AI prose.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Article Writer - Metric Pacing Controller",
+    "description": "Instruction guide to break robotic writing structures using dynamic rhythms.",
+    "instructions_md": "# METRIC PACING CONTROLLER\n\n## 1. Dynamic Pacing Laws\n* Vary sentence structure aggressively. Use short, punchy statements mixed with conversational clauses.\n* Strictly follow the style guide: absolutely zero decorative characters or emojis.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Programmer - Clean Architecture Enforcer",
+    "description": "Operational checking rules to eliminate dead logic loops or placeholders.",
+    "instructions_md": "# CLEAN ARCHITECTURE ENFORCER\n\n## 1. Production Integrity\n* Zero placeholder comments, missing conditions, or TODO statements allowed inside target code commits.\n* All validation constraints and error logging loops must be explicitly handled before pushing.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "UI_UX Designer - Layout Grid Configurator",
+    "description": "Functional tool to calculate programmatic spacing maps.",
+    "instructions_md": "Execute layout_grid_configurator to normalize screen dimensions.",
+    "custom_tool_source": "def run(args, company_folder):\n    width = args.get('screen_width', 1920)\n    columns = 12 if width >= 1200 else (8 if width >= 768 else 4)\n    gutter = 24 if width >= 768 else 16\n    col_width = (width - (gutter * (columns + 1))) / columns\n    return f\"Responsive Grid Profile: Columns: {columns} | Individual Column Width: {round(col_width, 1)}px | Gutter spacing: {gutter}px\"",
+    "custom_tool_schema_json": "{\"type\": \"object\", \"properties\": {\"screen_width\": {\"type\": \"number\"}}, \"required\": [\"screen_width\"]}"
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "UI_UX Designer - Friction Mapping Framework",
+    "description": "Guidelines for mapping target interactive roadblocks.",
+    "instructions_md": "# FRICTION MAPPING FRAMEWORK\n\n## 1. User Path Diagnostics\n* Isolate workflow steps requiring complex actions or multiple text inputs.\n* Streamline pathways to guarantee core actions complete within 3 interaction loops.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "UI_UX Designer - Design Token Compliance",
+    "description": "Enforcement guide restricting structural colors and layouts to fixed guidelines.",
+    "instructions_md": "# DESIGN TOKEN COMPLIANCE\n\n## 1. Visual Restrictions\n* Restrict sizing properties, background colors, and font styles to predetermined token variables.\n* Reject arbitrary visual properties introduced outside the master design system specification.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Data Analyst - Metric Deviation Detector",
+    "description": "Functional code module to detect statistical operational shifts outside historical ranges.",
+    "instructions_md": "Invoke metric_deviation_detector to verify telemetry variance flags.",
+    "custom_tool_source": "def run(args, company_folder):\n    metrics = args.get('historical_metrics', [])\n    current = args.get('current_value', 0.0)\n    if not metrics: return 'No historical context loaded.'\n    avg = sum(metrics) / len(metrics)\n    variance = abs(current - avg) / avg if avg != 0 else 0\n    return f\"Parsed operational variance: {round(variance * 100, 2)}% against historical average of {round(avg, 2)}.\"",
+    "custom_tool_schema_json": "{\"type\": \"object\", \"properties\": {\"historical_metrics\": {\"type\": \"array\", \"items\": {\"type\": \"number\"}}, \"current_value\": {\"type\": \"number\"}}, \"required\": [\"historical_metrics\", \"current_value\"]}"
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Data Analyst - Root Cause Framework",
+    "description": "Instruction set defining the diagnostic steps for profiling metrics changes.",
+    "instructions_md": "# ROOT CAUSE FRAMEWORK\n\n## 1. Diagnostic Chain\n* Trace raw data changes to isolated engineering or content updates before filing trends.\n* Always parse the correlation between concurrent feature releases and user actions.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Data Analyst - Executive Report Shaper",
+    "description": "Structuring instructions to format massive telemetry dumps for business review.",
+    "instructions_md": "# EXECUTIVE REPORT SHAPER\n\n## 1. High-Level Structuring\n* Strip low-level variable loops from files routed straight to the CEO.\n* Consolidate metrics into explicit performance matrices highlighting profit or churn margins.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Social Media - Platform Thread Breakout",
+    "description": "Functional text splitter tracking character limits across social networks.",
+    "instructions_md": "Run platform_thread_breakout to format text content safely.",
+    "custom_tool_source": "def run(args, company_folder):\n    text = args.get('raw_text', '')\n    limit = args.get('character_limit', 280)\n    words = text.split()\n    chunks, current = [], []\n    for word in words:\n        if len(' '.join(current + [word])) <= limit:\n            current.append(word)\n        else:\n            chunks.append(' '.join(current))\n            current = [word]\n    if current: chunks.append(' '.join(current))\n    return f\"Split output array: Generated {len(chunks)} character-compliant segments.\"",
+    "custom_tool_schema_json": "{\"type\": \"object\", \"properties\": {\"raw_text\": {\"type\": \"string\"}, \"character_limit\": {\"type\": \"number\"}}, \"required\": [\"raw_text\"]}"
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Social Media - Hook Variator System",
+    "description": "Instruction matrix for creating platform headlines.",
+    "instructions_md": "# HOOK VARIATOR SYSTEM\n\n## 1. Headline Generation\n* Draft multiple platform hooks mapping out curiosity-driven, benefit-led, and pattern-interrupt structures.\n* Strictly align all variations with the style guide: zero decorative characters or emojis allowed.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Social Media - Engagement Character Scrubber",
+    "description": "Strict compliance rules ensuring output copy remains under processing boundaries.",
+    "instructions_md": "# ENGAGEMENT CHARACTER SCRUBBER\n\n## 1. Formatting Constraints\n* Sanitize text fields to remove trailing whitespace, redundant formatting tags, and corporate buzzwords.\n* Keep copy brief and optimized for fast processing and parsing speeds.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Media Assets - Prompt Vector Compiler",
+    "description": "Instructions for building descriptive asset instructions matching generation parameters.",
+    "instructions_md": "# PROMPT VECTOR COMPILER\n\n## 1. Generation Parameters\n* Structure image definitions with clear aspect tags, composition values, and palette boundaries.\n* Prevent abstract parameters by specifying explicit vector or stylistic guidelines.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Media Assets - Aspect Ratio Calculator",
+    "description": "Functional calculator computing dimension pixel counts for multi-screen containers.",
+    "instructions_md": "Invoke aspect_ratio_calculator to structure responsive media blocks.",
+    "custom_tool_source": "def run(args, company_folder):\n    target_width = args.get('target_width', 1080)\n    ratio_string = args.get('ratio', '16:9')\n    w_ratio, h_ratio = map(int, ratio_string.split(':'))\n    target_height = int((target_width / w_ratio) * h_ratio)\n    return f\"Calculated Aspect Boundary: {target_width}x{target_height} pixels ({ratio_string})\"",
+    "custom_tool_schema_json": "{\"type\": \"object\", \"properties\": {\"target_width\": {\"type\": \"number\"}, \"ratio\": {\"type\": \"string\"}}, \"required\": [\"target_width\", \"ratio\"]}"
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Media Assets - Asset Variant Matrix",
+    "description": "Instruction guide ensuring generated items stay locked to a visual brand palette.",
+    "instructions_md": "# ASSET VARIANT MATRIX\n\n## 1. Visual Theme Controls\n* Validate layout parameters across sub-assets to enforce brand palette uniformity.\n* Reject visual generations introducing mismatched themes, complex overlays, or erratic gradients.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Security Compliance - Secret Leak Scanner",
+    "description": "Functional text scanner to intercept exposed cryptographic tokens or security credentials.",
+    "instructions_md": "Invoke secret_leak_scanner to analyze text layers before external transport protocols take place.",
+    "custom_tool_source": "def run(args, company_folder):\n    payload = args.get('text_payload', '')\n    signatures = ['sk-', 'passwd=', 'secret=', 'bearer ', 'api_key']\n    found = [sig for sig in signatures if sig in payload.lower()]\n    if found:\n        return f\"CRITICAL ALERT: Potential credential leak intercepted matching indicators: {', '.join(found)}\"\n    return \"Security scanning passed. No high-risk signature structures detected in current text stream.\"",
+    "custom_tool_schema_json": "{\"type\": \"object\", \"properties\": {\"text_payload\": {\"type\": \"string\"}}, \"required\": [\"text_payload\"]}"
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Security Compliance - Open Source License Inspector",
+    "description": "Instruction gates managing the categorization and restrictions of third-party modular additions.",
+    "instructions_md": "# OPEN SOURCE LICENSE INSPECTOR\n\n## 1. Compliance Mandates\n* Verify that all runtime modules and code blocks added by development dependencies utilize permissive, commercial-friendly licensing terms.\n* Automatically flag and isolate any recursive open-source library elements using strict copyleft terms before code merges with core pipeline structures.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Security Compliance - Data Sanitization Policy",
+    "description": "Procedural instructions ensuring private user variables are completely stripped before processing steps occur.",
+    "instructions_md": "# DATA SANITIZATION POLICY\n\n## 1. Perimeter Sanitization\n* Ensure all individual tracking fields, authentication codes, or internal corporate data strings are masked before passing data to outside model pipelines.\n* Maintain system compliance variables to block transit profiles containing raw unprotected user identifiers.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Project Manager - Critical Path Resolver",
+    "description": "Functional scheduler determining dependencies and timeline weights across tracking modules.",
+    "instructions_md": "Execute critical_path_resolver to dynamically update task sequence priorities.",
+    "custom_tool_source": "def run(args, company_folder):\n    tasks = args.get('task_nodes', [])\n    sorted_nodes = sorted(tasks, key=lambda x: x.get('dependency_count', 0), reverse=True)\n    priorities = [f\"{node.get('name', 'Task')}: Priority 1 (Blocker)\" if idx == 0 else f\"{node.get('name', 'Task')}: Standard\" for idx, node in enumerate(sorted_nodes)]\n    return ' | '.join(priorities) if priorities else 'Task pipeline clear. No dependencies to manage.'",
+    "custom_tool_schema_json": "{\"type\": \"object\", \"properties\": {\"task_nodes\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}, \"dependency_count\": {\"type\": \"number\"}}, \"required\": [\"name\"]}}}, \"required\": [\"task_nodes\"]}"
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Project Manager - Bottleneck Flagging Engine",
+    "description": "Operational instructions tracking wait states and response lags between creative agents.",
+    "instructions_md": "# BOTTLENECK FLAGGING ENGINE\n\n## 1. Resource Rebalancing\n* Monitor task loop wait states across working files. If an item undergoes more than three rework cycles under the Auditor, flag structural blockage to the CEO.\n* Dynamically prompt the Researcher to refine the project brief context if the Writer or Programmer stalls on ambiguous requirements.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Project Manager - Resource Synchronization Gate",
+    "description": "Workflow rules managing automated task routing when downline files complete checkpoints.",
+    "instructions_md": "# RESOURCE SYNCHRONIZATION GATE\n\n## 1. Downstream Asset Handling\n* Enforce strict ordering gates: do not allow the Article Writer or Programmer to commit active processing time until the Researcher locks the master context file.\n* Instantly push approved assets into downline pipelines the second the Auditor signs off on task quality metrics.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Financial Budgeting - Run-Rate Token Calculator",
+    "description": "Functional accounting logic processing model cost trends relative to explicit limits.",
+    "instructions_md": "Invoke run_rate_token_calculator to assess structural project spending parameters.",
+    "custom_tool_source": "def run(args, company_folder):\n    token_count = args.get('total_tokens', 0)\n    model_tier = args.get('model_tier', 'premium')\n    rate = 10.0 if model_tier == 'premium' else 1.5\n    estimated_cost = round((token_count / 1000000) * rate, 4)\n    return f\"Token computation cost analyzed: ${estimated_cost} USD generated over {token_count} transactional tokens under the {model_tier} routing structure.\"",
+    "custom_tool_schema_json": "{\"type\": \"object\", \"properties\": {\"total_tokens\": {\"type\": \"number\"}, \"model_tier\": {\"type\": \"string\"}}, \"required\": [\"total_tokens\"]}"
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Financial Budgeting - High-Overhead Interceptor",
+    "description": "Instruction module containing safety rules to pause unoptimized data structures.",
+    "instructions_md": "# HIGH-OVERHEAD INTERCEPTOR\n\n## 1. Operational Safeguards\n* Automatically pause any recurring task execution string that experiences a sudden cost variance exceeding 20% within a single processing sequence.\n* Block loops that repeatedly pass redundant file dumps into expensive frontier model prompt scopes without text condensation cycles.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Financial Budgeting - Model Efficiency Auditor",
+    "description": "Operational guidelines enforcing the scaling down of computing loads for simple text tasks.",
+    "instructions_md": "# MODEL EFFICIENCY AUDITOR\n\n## 1. Computing Asset Optimization\n* Enforce system resource constraints: basic validation checks, punctuation sanitization, and string sorting arrays must run on local or lightweight open-source configurations.\n* Reserve high-tier context window infrastructure solely for multi-agent synthesis loops, final strategic signatures, or complex logic calculations.",
+    "custom_tool_source": null,
+    "custom_tool_schema_json": null
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "SEO Specialist - Semantic Density Analyzer",
+    "description": "Functional text analysis tool to optimize keyword ratios and eliminate keyword stuffing.",
+    "instructions_md": "Invoke semantic_density_analyzer to analyze drafted copy against structural text guidelines.",
+    "custom_tool_source": "def run(args, company_folder):\n    text_content = args.get('text_content', '')\n    target_keyword = args.get('target_keyword', '').lower()\n    words = [w.lower().strip('.,!?()\"') for w in text_content.split()]\n    total_words = len(words)\n    if total_words == 0: return 'Empty text payload provided.'\n    keyword_count = words.count(target_keyword)\n    density = (keyword_count / total_words) * 100\n    status = 'OPTIMAL' if 1.0 <= density <= 2.5 else ('STUFFED' if density > 2.5 else 'UNDER-INDEXED')\n    return f\"SEO Density Matrix: Keyword '{target_keyword}' found {keyword_count} times. Frequency: {round(density, 2)}%. Status: {status}.\"\n",
+    "custom_tool_schema_json": "{\"type\": \"object\", \"properties\": {\"text_content\": {\"type\": \"string\"}, \"target_keyword\": {\"type\": \"string\"}}, \"required\": [\"text_content\", \"target_keyword\"]}"
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "SEO Specialist - Search Intent Optimizer",
+    "description": "Instruction set for structuring structural header tags to match search requirements.",
+    "instructions_md": "# SEARCH INTENT OPTIMIZER\n\n## 1. Structural Content Gating\n* Convert flat, narrative text headers into intent-driven informational frameworks matching specific query categories.\n* Re-anchor heading tags to explicitly address primary educational or commercial transaction terms without breaking style limits[cite: 5, 6]."
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "SEO Specialist - Schema Markup Boilerplate",
+    "description": "Instruction set managing structural semantic additions to output deliverables.",
+    "instructions_md": "# SCHEMA MARKUP BOILERPLATE\n\n## 1. Metadata Generation\n* Automatically generate clean JSON-LD structured data fields for all core copy deliverables.\n* Ensure accurate schema profiling for articles, tutorials, or engineering assets to guarantee clean indexing structures[cite: 5]."
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Competitor Intelligence - Signal Noise Filter",
+    "description": "Operational rules to clean external industry trackers and isolate primary roadmap alterations.",
+    "instructions_md": "# SIGNAL NOISE FILTER\n\n## 1. Aggregation Standards\n* Automatically strip pure marketing slogans, repetitive press statements, and public relations fluff from incoming asset streams.\n* Focus system parsing resources entirely on changes to public codebase repositories, API updates, documentation shifts, and packaging price changes."
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Competitor Intelligence - Trend Weighting Engine",
+    "description": "Functional calculation tool to weigh competitive releases against internal operational roadmaps.",
+    "instructions_md": "Invoke trend_weighting_engine to process raw industry shifts.",
+    "custom_tool_source": "def run(args, company_folder):\n    market_shifts = args.get('market_shifts', [])\n    high_priority = [s for s in market_shifts if s.get('severity_tier', '').lower() == 'critical']\n    if len(high_priority) > 0:\n        return f\"CRITICAL COMPETITIVE THREAT: Detected {len(high_priority)} market actions requiring immediate CEO strategic review.\"\n    return f\"Market monitoring normalized. Processed {len(market_shifts)} low-impact tracking variables.\"\n",
+    "custom_tool_schema_json": "{\"type\": \"object\", \"properties\": {\"market_shifts\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}, \"severity_tier\": {\"type\": \"string\"}}, \"required\": [\"name\", \"severity_tier\"]}}}, \"required\": [\"market_shifts\"]}"
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Competitor Intelligence - Competitive Threat Matrix",
+    "description": "Structuring instructions to format market updates into compact briefs.",
+    "instructions_md": "# COMPETITIVE THREAT MATRIX\n\n## 1. Executive Intelligence Formats\n* Organize competitor insights into short, actionable risk vectors[cite: 5].\n* Highlight the exact baseline requirements affected, the timeline of the external change, and provide an direct recommendation to the Researcher."
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "User Feedback - Sentiment Analyzer",
+    "description": "Functional math tool to score text layers based on critical priority markers.",
+    "instructions_md": "Execute sentiment_analyzer to parse user tickets.",
+    "custom_tool_source": "def run(args, company_folder):\n    tickets = args.get('tickets', [])\n    furious_words = ['broken', 'fail', 'error', 'crash', 'horrible', 'refund', 'bug']\n    escalate_count = 0\n    for t in tickets:\n        text = t.get('text', '').lower()\n        if any(w in text for w in furious_words):\n            escalate_count += 1\n    return f\"Feedback Scanner: Scanned {len(tickets)} rows. Identified {escalate_count} critical issues requiring prompt pipeline balancing.\"\n",
+    "custom_tool_schema_json": "{\"type\": \"object\", \"properties\": {\"tickets\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"text\": {\"type\": \"string\"}}, \"required\": [\"text\"]}}}, \"required\": [\"tickets\"]}"
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "User Feedback - Ticket Taxonomy Grouper",
+    "description": "Operational instructions sorting raw community inputs into target operational categories.",
+    "instructions_md": "# TICKET TAXONOMY GROUPER\n\n## 1. Categorization Criteria\n* Categorize loose community complaints into hard, operational buckets: Code Bug, Interface Failure, or Core Information Gap.\n* Route files down to their designated pipeline owner instantly: Code errors straight to the Programmer, documentation bugs to the Writer."
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "User Feedback - Engineering Ticket Translator",
+    "description": "Instructions to translate subjective human hyperbole into clear development instructions.",
+    "instructions_md": "# ENGINEERING TICKET TRANSLATOR\n\n## 1. Variable Cleaning\n* Strip emotional text layers, exclamation marks, and raw frustration comments from community submissions[cite: 6].\n* Re-characterize reports into objective error logs containing exact processing routes, broken conditions, and replicable step data."
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "DevOps Deployment - Deployment Health Checker",
+    "description": "Functional code utility to verify latency array bounds and ensure infrastructure stability post-release.",
+    "instructions_md": "Invoke deployment_health_checker to analyze system log metric bounds[cite: 5].",
+    "custom_tool_source": "def run(args, company_folder):\n    latencies = args.get('latency_ms', [])\n    error_rate = args.get('error_rate', 0.0)\n    if not latencies: return 'No real-time runtime monitoring metrics received.'\n    avg_latency = sum(latencies) / len(latencies)\n    if avg_latency > 500 or error_rate > 0.02:\n        return f\"CRITICAL METRIC EXCEEDED: Latency average is {round(avg_latency, 1)}ms and error rate is {error_rate * 100}%. System rollback recommended.\"\n    return f\"Infrastructure stable. Latency avg: {round(avg_latency, 1)}ms. Error rate: {error_rate * 100}%.\"",
+    "custom_tool_schema_json": "{\"type\": \"object\", \"properties\": {\"latency_ms\": {\"type\": \"array\", \"items\": {\"type\": \"number\"}}, \"error_rate\": {\"type\": \"number\"}}, \"required\": [\"latency_ms\", \"error_rate\"]}"
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "DevOps Deployment - Automated Rollback Protocols",
+    "description": "Instruction set detailing the deployment reversal chain during server fault spikes.",
+    "instructions_md": "# AUTOMATED ROLLBACK PROTOCOLS\n\n## 1. Reversal Gating\n* If the Deployment Health Checker drops a high-risk system alert array, freeze the active production traffic routing pipeline immediately[cite: 5].\n* Safely point production load balances back to the previous stable image compilation hash and send a diagnostic alert down to the Programmer."
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "DevOps Deployment - Environment Drift Sentinel",
+    "description": "Instruction checklist verifying configuration matching across testing environments.",
+    "instructions_md": "# ENVIRONMENT DRIFT SENTINEL\n\n## 1. System Variable Verifications\n* Match system variables, database tokens, library packages, and container frameworks across staging and live production profiles before pushing changes.\n* Immediately halt the execution train if variance is discovered between environmental files."
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Vector Knowledge base - Redundant Node Purger",
+    "description": "Functional text utility to sweep string tables and locate matching semantic records.",
+    "instructions_md": "Run redundant_node_purger to maintain lean context indexes across the knowledge layer[cite: 5].",
+    "custom_tool_source": "def run(args, company_folder):\n    records = args.get('knowledge_records', [])\n    seen = set()\n    duplicates = 0\n    for r in records:\n        clean = r.strip().lower()\n        if clean in seen: duplicates += 1\n        else: seen.add(clean)\n    return f\"Knowledge base cleanup engine completed. Evaluated {len(records)} entries. Flagged {duplicates} redundant nodes for structural purging.\"",
+    "custom_tool_schema_json": "{\"type\": \"object\", \"properties\": {\"knowledge_records\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}}, \"required\": [\"knowledge_records\"]}"
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Vector Knowledge base - Context Drift Evaluator",
+    "description": "Instructions to normalize core definitions across databases over project lifecycles.",
+    "instructions_md": "# CONTEXT DRIFT EVALUATOR\n\n## 1. Long-Term Semantic Alignment\n* Review updated entries in the corporate knowledge base to ensure technical terminology hasn't slowly shifted from definitions set in original project templates.\n* Enforce cross-document vocabulary updates to ensure that downstream agents retrieve accurate, unambiguous contextual answers[cite: 5]."
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Vector Knowledge base - Semantic Retrieval Shaper",
+    "description": "Operational instructions modifying query inputs to maximize retrieval engine match scores.",
+    "instructions_md": "# SEMANTIC RETRIEVAL SHAPER\n\n## 1. Context Engineering Constraints\n* Compress incoming search parameters by removing descriptive pleasantries, greeting codes, and weak keywords before querying vector indexes.\n* Wrap text prompts in clean, structural templates optimized for embedding matches to help the Researcher locate deep references cleanly."
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Red Team - Payload Injection Generator",
+    "description": "Functional tool simulating adversarial inputs to check pipeline logic robustness.",
+    "instructions_md": "Run payload_injection_generator to push complex logic checks against validation layers[cite: 5].",
+    "custom_tool_source": "def run(args, company_folder):\n    target_field = args.get('target_field', 'input')\n    malicious_inputs = [\"../etc/passwd\", \"' OR 1=1 --\", \"<script>alert(1)</script>\", \"\", \"A\"*5000]\n    return f\"Adversarial simulation complete for field [{target_field}]. Pushed {len(malicious_inputs)} test payloads. Review system error handling logs.\"",
+    "custom_tool_schema_json": "{\"type\": \"object\", \"properties\": {\"target_field\": {\"type\": \"string\"}}, \"required\": [\"target_field\"]}"
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Red Team - Logical Bias Challenger",
+    "description": "Instruction set to aggressively spot unchecked assumptions inside copy or code outputs.",
+    "instructions_md": "# LOGICAL BIAS CHALLENGER\n\n## 1. Output Stress-Testing\n* Intercept intermediate drafts before final submission to evaluate them for blind spots, weak reasoning patterns, or marketing fluff[cite: 5].\n* Require that any factual assertion or software architecture decision matches verified documentation records, sending files back if logic fails verification."
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Red Team - System Constraint Breaker",
+    "description": "Operational checking matrix designed to push framework configurations to validation failure limits.",
+    "instructions_md": "# SYSTEM CONSTRAINT BREAKER\n\n## 1. Boundary Verification Limits\n* Intentionally pass empty files, maximum character configurations, and corrupted data arrays into agent pipelines to check bounds performance.\n* Document any instance where a pipeline crash occurs without dropping an explicit logging flag or failing gracefully down to a safe state."
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Legal Liaison - Copyright Hygiene Assurer",
+    "description": "Instruction set validating written text outputs against proprietary plagiarism parameters.",
+    "instructions_md": "# COPYRIGHT HYGIENE ASSURER\n\n## 1. Proprietary Gating\n* Intercept content drafts to verify that sentence sequences do not mirror copyrighted material or branded software strings.\n* Require the Article Writer to reconstruct highly matching phrases into entirely fresh, original prose frameworks before any external publishing occurs[cite: 5]."
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Legal Liaison - Regional Restriction Evaluator",
+    "description": "Instruction checking criteria ensuring geographic data compliance profiles are actively maintained.",
+    "instructions_md": "# REGIONAL RESTRICTION EVALUATOR\n\n## 1. Jurisdictional Boundary Gating\n* Evaluate product features, privacy banners, and cookie opt-ins against target regional jurisdictions (e.g., EU, Canada, USA).\n* Enforce strict runtime execution boundaries: automatically halt distribution workflows if localization flags fail to pass compliance data standards."
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Legal Liaison - Privacy Matrix Checker",
+    "description": "Functional compliance scanner verifying database tables for exposed tracking or personal data variables.",
+    "instructions_md": "Invoke privacy_matrix_checker to check array profiles before external network transport routines occur[cite: 5].",
+    "custom_tool_source": "def run(args, company_folder):\n    columns = [c.lower().strip() for c in args.get('schema_columns', [])]\n    pii_flags = ['sin', 'ssn', 'phone', 'email', 'birthday', 'passport', 'address']\n    exposed = [col for col in columns if col in pii_flags]\n    if exposed:\n        return f\"COMPLIANCE FAILURE: Protected identifiers found unmasked in data schema layout: {', '.join(exposed)}. Halting workflow loop.\"\n    return \"Compliance schema verification passed. No raw, unencrypted private fields isolated inside structural query parameters.\"",
+    "custom_tool_schema_json": "{\"type\": \"object\", \"properties\": {\"schema_columns\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}}, \"required\": [\"schema_columns\"]}"
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Model Router - Dynamic Model Router",
+    "description": "Functional load-balancing calculator matching processing constraints to open-source or premium tier nodes.",
+    "instructions_md": "Run dynamic_model_router to select optimal model runtime targets based on current task priority rankings[cite: 5].",
+    "custom_tool_source": "def run(args, company_folder):\n    complexity = args.get('task_complexity_score', 5)\n    if complexity >= 8:\n        return \"Routing Task Segment to: Premium Frontier Cloud Topology (High Context Layer). Reason: Deep structural logical reasoning requirements.\"\n    return \"Routing Task Segment to: Localized Open-Source Edge Container (8B Optimized Model). Reason: Standard string sanitization / formatting loop.\"",
+    "custom_tool_schema_json": "{\"type\": \"object\", \"properties\": {\"task_complexity_score\": {\"type\": \"number\"}}, \"required\": [\"task_complexity_score\"]}"
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Model Router - Context Window Compressor",
+    "description": "Instruction guidelines defining methods to extract structural tokens and remove repetitive conversational payloads.",
+    "instructions_md": "# CONTEXT WINDOW COMPRESSOR\n\n## 1. Token Thrift Rules\n* Prior to task delegation loops, slice repeated instruction text, empty chat blocks, and verbose system greetings out of the payload.\n* Compact raw data payloads into unified, concise markdown arrays to maximize cache hits and prevent context window bleed."
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "Model Router - Cost-Token Ratio Balancer",
+    "description": "Enforcement criteria weighing strict execution deadlines against live commercial API token rate limits.",
+    "instructions_md": "# COST-TOKEN RATIO BALANCER\n\n## 1. Budget Allocation Constraints\n* Monitor computing velocities. If an operation does not sit on the critical path, delay model processing batches until off-peak API window windows apply.\n* Force down-tier local model selections for drafting processes, preserving high-tier budgets for the Auditor's operational verification passes[cite: 5]."
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "User Persona Simulator - Profile Psychographic Anchor",
+    "description": "Instruction set locking behavioral testing parameters to rigid target demographic filters.",
+    "instructions_md": "# PROFILE PSYCHOGRAPHIC ANCHOR\n\n## 1. Psychological Profile Maintenance\n* Anchor simulated cognitive loops strictly to the selected customer profile metadata. Do not drift into logical agent deductions or high-level technical awareness.\n* Maintain user constraints perfectly: if testing a novice profile, intentionally miss advanced layout paths or developer-oriented shorthand configurations."
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "User Persona Simulator - Friction Scoring Utility",
+    "description": "Functional evaluation utility processing interaction lengths and layout sequences to generate complex usability scores.",
+    "instructions_md": "Invoke friction_scoring_utility to grade interactive layout pathways[cite: 5].",
+    "custom_tool_source": "def run(args, company_folder):\n    steps = args.get('action_steps', [])\n    total_steps = len(steps)\n    input_fields = sum(1 for s in steps if s.get('requires_typing', False))\n    score = round((total_steps * 1.2) + (input_fields * 2.5), 1)\n    verdict = 'HIGH FRICTION' if score > 12.0 else ('OPTIMAL' if score <= 6.0 else 'MODERATE')\n    return f\"Synthetic Usability Profile: Calculated Complexity Score: {score} ({verdict}). Steps: {total_steps} | Input Points: {input_fields}.\"\n",
+    "custom_tool_schema_json": "{\"type\": \"object\", \"properties\": {\"action_steps\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"requires_typing\": {\"type\": \"boolean\"}}}}}, \"required\": [\"action_steps\"]}"
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "User Persona Simulator - Subjective Critique Engine",
+    "description": "Guidelines ensuring testing feedback frames human interaction flaws clearly over clean code evaluations.",
+    "instructions_md": "# SUBJECTIVE CRITIQUE ENGINE\n\n## 1. Experiential Feedback Parameters\n* Document emotional friction points, formatting bottlenecks, and moments of text fatigue across written items.\n* Reject output that reads like a structural systems manual. Require conversational readability, simple vocabulary targets, and authentic pacing[cite: 5, 6]."
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "API Integration - Webhook Handshake Healer",
+    "description": "Functional diagnostic script tracking external server connectivity parameters and resetting expired connection tokens.",
+    "instructions_md": "Invoke webhook_handshake_healer if downline messaging paths drop a non-200 state code[cite: 5].",
+    "custom_tool_source": "def run(args, company_folder):\n    status_code = args.get('http_status', 200)\n    if status_code in [401, 403]:\n        return \"CONNECTION ERROR AUTODIAGNOSIS: Security handshake token has expired. Executing secure credential refresh protocol sequence... Complete. Webhook state normalized.\"\n    elif status_code != 200:\n        return f\"ROUTING FAILURE: Server dropped non-standard code [{status_code}]. Launching exponential backoff retry loop script...\"\n    return \"API connection link verified. Webhook endpoints currently tracking online and fully responsive.\"",
+    "custom_tool_schema_json": "{\"type\": \"object\", \"properties\": {\"http_status\": {\"type\": \"number\"}}, \"required\": [\"http_status\"]}"
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "API Integration - Serialization Validator",
+    "description": "Instruction parameters ensuring payload schemas line up perfectly before data transport routines engage.",
+    "instructions_md": "# SERIALIZATION VALIDATOR\n\n## 1. Schema Formatting Rules\n* Check that data types, tracking variables, date shapes (strictly YYYY-MM-DD format), and structure definitions map directly to target web protocols before shipment.\n* Block outgoing transmissions containing raw string arrays where strict structural keys are mandated by downline destination environments[cite: 5]."
+  },
+  {
+    "looper_skill_export_version": 1,
+    "name": "API Integration - Uptime Log Sentinel",
+    "description": "Operational guidelines monitoring external automated platforms to identify silent performance drop-offs.",
+    "instructions_md": "# UPTIME LOG SENTINEL\n\n## 1. Perimeter Tracking\n* Parse incoming system heartbeat frames from external tools (Discord notifications, Google Sheets triggers, cloud scripts) every loop cycle.\n* Drop high-priority warning logs directly to the Project Manager if automated status counters reveal silent system disconnects or request time-outs."
+  }
+]

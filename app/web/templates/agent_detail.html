@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}{{ agent.name }} — Looper{% endblock %}
+
+{% block scripts %}
+<script>window.LOOPER_MODELS = {{ models_to_json(models) | safe }};</script>
+<script>window.LOOPER_AGENT_TEMPLATES = {{ agent_templates_to_json(agent_templates) | safe }};</script>
+{% endblock %}
+
+{% block content %}
+<a href="/companies/{{ agent.company_id }}">&larr; Back to {{ company.name }}</a>
+<h2>{{ agent.name }} <span class="muted">— {{ agent.title }}</span></h2>
+<span class="badge {{ agent.status }}">{{ agent.status }}</span>
+{% if agent.model_id %}<span class="badge">{{ agent.model_id }}</span>{% endif %}
+{% if agent.is_ceo %}<span class="badge active">CEO</span>{% endif %}
+{% if agent.status != 'fired' %}<div style="margin-top:10px;"><a href="/agents/{{ agent.id }}/chat"><button type="button">Chat with {{ agent.name }}</button></a></div>{% endif %}
+
+<div class="card" style="margin-top:16px;">
+  <div class="flex-between">
+    <h3>Soul / Personality</h3>
+    {% if agent.status != 'fired' %}<button class="secondary" onclick="document.getElementById('edit-modal').style.display='flex'">Edit</button>{% endif %}
+  </div>
+  <pre class="code">{{ agent.personality or "(none set)" }}</pre>
+</div>
+
+{% if agent.status != 'fired' %}
+<div id="edit-modal" class="modal-backdrop" style="display:none;">
+  <div class="modal">
+    <h3>Edit {{ agent.name }}</h3>
+    <form method="post" action="/agents/{{ agent.id }}/edit">
+      {% if agent_templates %}
+      <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);">
+        <label style="font-size:12px;color:var(--muted);margin-bottom:4px;">From Agent Shop (optional — overwrites title &amp; personality)</label>
+        <select onchange="applyAgentTemplate(this)" style="margin-bottom:0;">
+          <option value="">-- Choose a template --</option>
+          {% for t in agent_templates %}
+          <option value="{{ t.id }}">{{ t.name }}{% if t.recommended_model_id %} ★{% endif %}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+      <label>Name</label><input name="name" value="{{ agent.name }}" required>
+      <label>Title</label><input name="title" value="{{ agent.title }}" required>
+      <label>Personality / soul</label><textarea name="personality" rows="4">{{ agent.personality }}</textarea>
+      <label>Model</label>
+      <div x-data='modelPicker({{ agent.model_id | tojson }})'>
+        <div class="model-filter-row">
+          <template x-for="c in cats" :key="c.id">
+            <button type="button" class="model-filter-pill"
+                    :class="{ 'active': catFilter === c.id }"
+                    @click.prevent="catFilter = c.id; search = ''"
+                    x-text="c.label + ' (' + catCount(c.id) + ')'">
+            </button>
+          </template>
+        </div>
+        <input type="text" x-model="search" placeholder="Search models..." style="margin-bottom:6px;">
+        <select name="model_id" x-model="currentId" required>
+          <option value="" disabled>Select a model...</option>
+          <template x-for="m in filtered" :key="m.id">
+            <option :value="m.id" x-text="m.label"></option>
+          </template>
+        </select>
+        <div class="muted" x-show="filtered.length === 0" style="margin-top:4px;font-size:12px;">No models match — try a different filter.</div>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <button type="submit">Save</button>
+        <button type="button" class="secondary" onclick="document.getElementById('edit-modal').style.display='none'">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <h3>Reporting structure</h3>
+  <div class="muted">Reports to: {% if agent.parent %}<a href="/agents/{{ agent.parent.id }}">{{ agent.parent.name }}</a>{% else %}Nobody (CEO){% endif %}</div>
+  <div class="muted">Direct reports: {{ agent.children|selectattr("status", "ne", "fired")|list|length }}</div>
+</div>
+
+<div class="card">
+  <h3>Skills granted to {{ agent.name }}</h3>
+  {% for g, skill in grant_rows %}
+  <div class="log-entry flex-between">
+    <div>
+      <strong>{{ skill.name }}</strong>
+      <span class="badge {% if g.status == 'approved' %}active{% elif g.status == 'requested' %}pending{% else %}fired{% endif %}">{{ g.status }}</span>
+      {% if skill.description %}<span class="muted" style="font-size:12px;margin-left:6px;">{{ skill.description[:80] }}{% if skill.description|length > 80 %}…{% endif %}</span>{% endif %}
+    </div>
+    {% if g.status == 'approved' %}
+    <form method="post" action="/skill-grants/{{ g.id }}/revoke"><button type="submit" class="secondary">Revoke</button></form>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="muted" style="margin-bottom:10px;">No skills granted yet.</div>
+  {% endfor %}
+
+  {% if shop_skills %}
+  <details style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+    <summary style="cursor:pointer;font-weight:600;user-select:none;">Browse Skill Shop <span class="muted" style="font-weight:400;">({{ shop_skills|length }} skills — click to expand)</span></summary>
+    <div style="margin-top:10px;max-height:520px;overflow-y:auto;">
+      {% for s in shop_skills %}
+      <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+        <div class="flex-between" style="align-items:flex-start;gap:8px;">
+          <div style="flex:1;min-width:0;">
+            <div>
+              <strong>{{ s.name }}</strong>
+              {% if s.custom_tool_source %}<span class="badge active" style="margin-left:6px;font-size:11px;">custom tool</span>{% endif %}
+            </div>
+            {% if s.description %}
+            <div class="muted" style="font-size:12px;margin-top:3px;">{{ s.description }}</div>
+            {% endif %}
+            {% if s.instructions_md %}
+            <details style="margin-top:5px;">
+              <summary class="muted" style="cursor:pointer;font-size:12px;user-select:none;">View instructions</summary>
+              <pre class="code" style="max-height:120px;overflow-y:auto;font-size:11px;white-space:pre-wrap;margin-top:4px;">{{ s.instructions_md[:500] }}{% if s.instructions_md|length > 500 %}…{% endif %}</pre>
+            </details>
+            {% endif %}
+          </div>
+          <div style="flex:none;padding-top:2px;">
+            {% if s.id in granted_skill_ids %}
+            <span class="badge active">Granted</span>
+            {% else %}
+            <form method="post" action="/skills/{{ s.id }}/grant" style="margin:0;">
+              <input type="hidden" name="agent_id" value="{{ agent.id }}">
+              <input type="hidden" name="redirect_to" value="/agents/{{ agent.id }}">
+              <button type="submit" class="secondary">Grant</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </details>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h3>Skills owned by {{ agent.name }}</h3>
+  {% for s in owned_skills %}
+  <div class="log-entry flex-between">
+    <div><strong>{{ s.name }}</strong> <span class="badge">{{ s.visibility }}</span></div>
+    <a href="/skills/{{ s.id }}/export">Export</a>
+  </div>
+  {% else %}
+  <div class="muted">None created yet.</div>
+  {% endfor %}
+
+  <details style="margin-top:10px;">
+    <summary class="muted" style="cursor:pointer;">Create a new skill</summary>
+    <form method="post" action="/agents/{{ agent.id }}/skills" style="margin-top:8px;">
+      <label>Name</label><input name="name" required>
+      <label>Description</label><input name="description">
+      <label>Instructions (merged into the agent's system prompt when active)</label>
+      <textarea name="instructions_md" rows="3"></textarea>
+      <label>Custom tool Python source (optional — must define <code>run(args, company_folder)</code>; always pauses for approval on use)</label>
+      <textarea name="custom_tool_source" rows="4" placeholder="def run(args, company_folder):&#10;    return 'result'"></textarea>
+      <label>Custom tool parameter schema (optional JSON Schema for the tool's arguments)</label>
+      <textarea name="custom_tool_schema_json" rows="2" placeholder='{"type": "object", "properties": {}, "required": []}'></textarea>
+      <label>Visibility</label>
+      <select name="visibility">
+        <option value="private">Private (this agent only)</option>
+        <option value="company">Company (any agent in {{ company.name }})</option>
+        <option value="shop">Skill Shop (any agent, any company)</option>
+      </select>
+      <button type="submit">Create Skill</button>
+    </form>
+  </details>
+
+  <details style="margin-top:10px;">
+    <summary class="muted" style="cursor:pointer;">Import a .skill.json file</summary>
+    <form method="post" action="/agents/{{ agent.id }}/skills/import" enctype="multipart/form-data" style="margin-top:8px;">
+      <input type="file" name="file" accept=".json" required>
+      <label>Visibility</label>
+      <select name="visibility">
+        <option value="private">Private</option>
+        <option value="company">Company</option>
+        <option value="shop">Skill Shop</option>
+      </select>
+      <button type="submit">Import</button>
+    </form>
+  </details>
+</div>
+
+<div class="card">
+  <h3>Memory ({{ memory_count }}/1000 retained)</h3>
+  <div style="max-height:400px;overflow-y:auto;">
+    {% for m in recent_memory %}
+    <div class="log-entry">
+      <span class="role">{{ m.role }}</span>
+      <span class="muted">{{ m.created_at.strftime("%Y-%m-%d %H:%M") }}</span>
+      <div>{{ m.content[:500] }}{% if m.content|length > 500 %}...{% endif %}</div>
+    </div>
+    {% else %}
+    <div class="muted">No memory yet.</div>
+    {% endfor %}
+  </div>
+</div>
+
+{% if agent.status != 'fired' %}
+<form hx-post="/agents/{{ agent.id }}/fire" hx-target="body" onsubmit="return confirm('Fire {{ agent.name }}?');">
+  <button type="submit" class="danger">Fire this agent</button>
+</form>
+{% endif %}
+{% endblock %}
