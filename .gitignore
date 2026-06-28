@@ -14,10 +14,8 @@ server.log
 # Playwright browser cache
 .playwright/
 
-# Android build artefacts
-android/app/build/
-android/.gradle/
-android/build/
+# Android — entire folder excluded (APK distributed separately)
+android/
 *.apk
 *.aab
 
@@ -27,6 +25,9 @@ dist/
 
 # Archives
 LinLoop.zip
+
+# Claude Code session data
+.claude/
 
 # macOS / Windows desktop cruft
 .DS_Store
