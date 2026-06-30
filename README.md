@@ -30,6 +30,47 @@ Clicking the shortcut starts the Looper server silently in the background and op
 
 ---
 
+## Linux Installer
+
+A single-file bash script that installs everything and creates an app-menu entry and desktop shortcut. Primarily designed for **Linux Mint 22.x**, but also works on Ubuntu 22.04/24.04, Debian 12, Fedora 39/40, and Arch Linux.
+
+**One-line install:**
+
+```bash
+curl -sSL https://raw.githubusercontent.com/Shango46/Looper/main/installer/install.sh | bash
+```
+
+Or download and inspect first:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/Shango46/Looper/main/installer/install.sh -o install.sh
+bash install.sh
+```
+
+The installer will automatically:
+
+1. Detect your package manager (`apt` / `dnf` / `pacman`)
+2. Install **Git** if not present
+3. Clone the Looper repository to `~/.local/share/looper`
+4. Install **Python 3.11** (via deadsnakes PPA on Mint/Ubuntu if needed)
+5. Create a Python virtual environment and install all dependencies
+6. Install **Node.js 20 LTS** (via NodeSource or nvm fallback)
+7. Install **n8n** globally via npm
+8. Install the **Playwright Chromium** browser engine (~150 MB)
+9. Generate the application icon
+10. Create a `looper-launch.sh` launcher and symlink it to `~/.local/bin/looper`
+11. Create an XDG `.desktop` entry (app menu + desktop shortcut)
+12. On Linux Mint / Cinnamon: mark the desktop shortcut as trusted so double-click works
+
+After install, launch Looper by:
+- Double-clicking the **Looper** icon on your Desktop
+- Searching **"Looper"** in the app menu
+- Running `looper` in any terminal (after `source ~/.bashrc`)
+
+> **Re-running the installer** on an existing install pulls the latest code from GitHub, recreates the venv, and updates shortcuts.
+
+---
+
 ## Features
 
 ### AI Companies & Agents
@@ -246,7 +287,7 @@ Your OpenRouter key is stored encrypted — never in plaintext.
 | **OpenRouter API key** | [openrouter.ai](https://openrouter.ai) — free tier available |
 | **Tailscale** | Only needed for Android remote access |
 
-The Windows installer handles all of these automatically.
+The Windows and Linux installers handle all of these automatically.
 
 ---
 
