@@ -29,6 +29,32 @@ class Company(Base):
     remote_code_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     remote_code_version: Mapped[int] = mapped_column(default=0)
     remote_code_set_at: Mapped[Optional[dt.datetime]] = mapped_column(nullable=True)
+
+    # Inbound webhook (n8n → Looper)
+    webhook_secret: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+
+    # Web search (Brave Search API)
+    brave_api_key_encrypted: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # n8n automation integration
+    n8n_mode: Mapped[str] = mapped_column(String(20), default="self_hosted")
+    n8n_project_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    n8n_cloud_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    n8n_cloud_api_key_encrypted: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Email (SMTP/IMAP)
+    email_display_name: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    email_smtp_host: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
+    email_smtp_port: Mapped[Optional[int]] = mapped_column(nullable=True)
+    email_smtp_username: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
+    email_smtp_password_encrypted: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    email_smtp_use_tls: Mapped[bool] = mapped_column(default=True)
+    email_imap_host: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
+    email_imap_port: Mapped[Optional[int]] = mapped_column(nullable=True)
+    email_imap_username: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
+    email_imap_password_encrypted: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    email_imap_use_ssl: Mapped[bool] = mapped_column(default=True)
+
     created_at: Mapped[dt.datetime] = mapped_column(default=utcnow)
 
     agents: Mapped[list["Agent"]] = relationship(back_populates="company", cascade="all, delete-orphan")
@@ -216,6 +242,16 @@ class UsageRecord(Base):
     created_at: Mapped[dt.datetime] = mapped_column(default=utcnow)
 
 
+class WebSearchRecord(Base):
+    __tablename__ = "web_search_records"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
+    agent_id: Mapped[int] = mapped_column(ForeignKey("agents.id"))
+    query: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[dt.datetime] = mapped_column(default=utcnow)
+
+
 class RemoteSession(Base):
     __tablename__ = "remote_sessions"
 
@@ -258,6 +294,16 @@ class AgentTemplate(Base):
     title: Mapped[str] = mapped_column(String(200))
     personality: Mapped[str] = mapped_column(Text, default="")
     recommended_model_id: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
+    created_at: Mapped[dt.datetime] = mapped_column(default=utcnow)
+
+
+class N8nTemplate(Base):
+    __tablename__ = "n8n_templates"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str] = mapped_column(Text, default="")
+    workflow_json: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[dt.datetime] = mapped_column(default=utcnow)
 
 

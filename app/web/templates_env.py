@@ -1,4 +1,6 @@
+import datetime as dt
 import json
+from urllib.parse import quote
 
 from fastapi.templating import Jinja2Templates
 
@@ -71,3 +73,23 @@ def agent_templates_to_json(agent_templates) -> str:
 
 
 templates.env.globals["agent_templates_to_json"] = agent_templates_to_json
+
+
+def _timeago(value: dt.datetime) -> str:
+    now = dt.datetime.now(dt.timezone.utc)
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=dt.timezone.utc)
+    diff = int((now - value).total_seconds())
+    if diff < 5:
+        return "just now"
+    if diff < 60:
+        return f"{diff}s ago"
+    if diff < 3600:
+        return f"{diff // 60}m ago"
+    if diff < 86400:
+        return f"{diff // 3600}h ago"
+    return f"{diff // 86400}d ago"
+
+
+templates.env.filters["timeago"] = _timeago
+templates.env.filters["urlquote"] = lambda s: quote(str(s), safe="/")

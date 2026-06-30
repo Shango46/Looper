@@ -146,8 +146,12 @@
 {% endif %}
 
 <div class="row" style="margin-top:16px;">
+  <a class="card" href="/companies/{{ company.id }}/activity" style="display:block;text-align:center;">&#128250; Live Activity</a>
   <a class="card" href="/companies/{{ company.id }}/tasks" style="display:block;text-align:center;">Activity / Tasks</a>
+  <a class="card" href="/companies/{{ company.id }}/files" style="display:block;text-align:center;">&#128193; Files</a>
   <a class="card" href="/companies/{{ company.id }}/heartbeats" style="display:block;text-align:center;">Heartbeats</a>
+  <a class="card" href="/companies/{{ company.id }}/n8n" style="display:block;text-align:center;">Automations (n8n)</a>
+  <a class="card" href="/companies/{{ company.id }}/rag" style="display:block;text-align:center;">Knowledge Base (RAG)</a>
   <a class="card" href="/companies/{{ company.id }}/settings" style="display:block;text-align:center;">Company Settings</a>
 </div>
 {% endblock %}

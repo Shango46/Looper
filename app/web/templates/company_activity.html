@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Live Activity — Looper{% endblock %}
+
+{% block content %}
+<div class="flex-between" style="margin-bottom:16px;">
+  <div class="row" style="align-items:center;gap:10px;">
+    <h2 style="margin:0;">Live Activity</h2>
+    <span id="live-dot" style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#16a34a;animation:live-pulse 2s ease-in-out infinite;flex-shrink:0;"></span>
+    <span class="muted" id="live-label" style="font-size:12px;letter-spacing:.05em;">LIVE</span>
+  </div>
+  <div class="row" style="gap:8px;">
+    <button id="pause-btn" class="secondary" onclick="toggleFeedPause()" style="font-size:13px;">Pause</button>
+    <a href="/companies/{{ company_id }}">&larr; Back to company</a>
+  </div>
+</div>
+
+{# Agent filter chips #}
+<div class="row" style="gap:6px;margin-bottom:16px;flex-wrap:wrap;">
+  <a href="/companies/{{ company_id }}/activity"
+     style="padding:4px 12px;border-radius:12px;font-size:12px;text-decoration:none;border:1px solid var(--border);
+            {% if not agent_id %}background:var(--accent,#3b82f6);color:#fff;{% else %}color:var(--muted);{% endif %}">
+    All agents
+  </a>
+  {% for a in agents %}
+  <a href="/companies/{{ company_id }}/activity?agent_id={{ a.id }}"
+     style="padding:4px 12px;border-radius:12px;font-size:12px;text-decoration:none;border:1px solid var(--border);
+            {% if agent_id == a.id %}background:var(--accent,#3b82f6);color:#fff;{% else %}color:var(--muted);{% endif %}">
+    {{ a.name }}
+  </a>
+  {% endfor %}
+</div>
+
+{# Feed container — HTMX polls every 2s #}
+{% set feed_url = "/companies/" ~ company_id ~ "/activity/feed" %}
+{% if agent_id %}{% set feed_url = feed_url ~ "?agent_id=" ~ agent_id %}{% endif %}
+
+<div id="activity-feed"
+     hx-get="{{ feed_url }}"
+     hx-trigger="load, every 2s"
+     hx-swap="innerHTML">
+  <div class="muted" style="text-align:center;padding:32px;">Loading...</div>
+</div>
+
+<style>
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+</style>
+
+<script>
+let _feedPaused = false;
+function toggleFeedPause() {
+  _feedPaused = !_feedPaused;
+  const feed = document.getElementById('activity-feed');
+  const btn = document.getElementById('pause-btn');
+  const dot = document.getElementById('live-dot');
+  const lbl = document.getElementById('live-label');
+  if (_feedPaused) {
+    feed.removeAttribute('hx-trigger');
+    htmx.process(feed);
+    btn.textContent = 'Resume';
+    dot.style.animation = 'none';
+    dot.style.background = '#6b7280';
+    lbl.textContent = 'PAUSED';
+  } else {
+    feed.setAttribute('hx-trigger', 'load, every 2s');
+    htmx.process(feed);
+    htmx.trigger(feed, 'load');
+    btn.textContent = 'Pause';
+    dot.style.animation = 'live-pulse 2s ease-in-out infinite';
+    dot.style.background = '#16a34a';
+    lbl.textContent = 'LIVE';
+  }
+}
+</script>
+{% endblock %}

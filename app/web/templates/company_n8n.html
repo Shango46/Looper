@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Automations — {{ company.name }}{% endblock %}
+{% block content %}
+<div class="flex-between">
+  <h2>{{ company.name }} — Automations</h2>
+  <a href="/companies/{{ company.id }}">&larr; Back to {{ company.name }}</a>
+</div>
+
+{% if company.n8n_mode == "self_hosted" and not n8n_running %}
+<div class="card" style="border-color:var(--warn,#f59e0b);margin-top:16px;">
+  <strong>n8n is not running.</strong>
+  <p class="muted">n8n starts automatically with Looper. If it didn't start, make sure Node.js and n8n are installed, then restart Looper. You can install n8n with: <code>npm install -g n8n</code></p>
+</div>
+{% else %}
+
+{# ── Status + Open button ───────────────────────────────────────────────── #}
+<div class="card" style="margin-top:16px;">
+  <div class="flex-between">
+    <div>
+      <strong>n8n</strong>
+      {% if company.n8n_mode == "cloud" %}
+        <span class="badge active">cloud</span>
+        {% if company.n8n_cloud_url %}<span class="muted">{{ company.n8n_cloud_url }}</span>{% endif %}
+      {% else %}
+        <span class="badge active">self-hosted · localhost:5678</span>
+      {% endif %}
+      {% if not company.n8n_project_id %}
+        <span class="badge fired">not linked yet — click Open n8n</span>
+      {% elif company.n8n_project_id.startswith("tag:") %}
+        <span class="badge">tag-isolated</span>
+      {% else %}
+        <span class="badge active">project-isolated</span>
+      {% endif %}
+    </div>
+    <form method="post" action="/companies/{{ company.id }}/n8n/open" target="_blank" style="margin:0;">
+      <button type="submit">Open n8n ↗</button>
+    </form>
+  </div>
+  {% if not api_key_ok %}
+  <div class="muted" style="margin-top:8px;">
+    Workflow list unavailable — n8n API key not yet configured. Open n8n to complete setup, then restart Looper.
+  </div>
+  {% endif %}
+</div>
+
+{# ── Login credentials (self-hosted only) ──────────────────────────────── #}
+{% if company.n8n_mode == "self_hosted" and n8n_email %}
+<div class="card" style="margin-top:12px;border-color:var(--border);">
+  <h3 style="margin-top:0;">n8n Login Credentials</h3>
+  <p class="muted">When n8n asks you to sign in, use these auto-generated credentials. They are created once by Looper and stored locally.</p>
+  <table style="width:100%;border-collapse:collapse;margin-top:8px;">
+    <tr>
+      <td style="padding:6px 0;color:var(--muted);width:80px;">Email</td>
+      <td style="padding:6px 0;font-family:monospace;">{{ n8n_email }}</td>
+      <td style="padding:6px 0;width:80px;text-align:right;">
+        <button class="secondary" style="padding:2px 10px;font-size:12px;"
+                onclick="navigator.clipboard.writeText('{{ n8n_email }}');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500);">Copy</button>
+      </td>
+    </tr>
+    <tr style="border-top:1px solid var(--border);">
+      <td style="padding:6px 0;color:var(--muted);">Password</td>
+      <td style="padding:6px 0;font-family:monospace;" x-data="{show:false}">
+        <span x-show="!show" style="letter-spacing:2px;">••••••••••••</span>
+        <span x-show="show">{{ n8n_password }}</span>
+        <button class="secondary" style="padding:2px 8px;font-size:12px;margin-left:8px;" @click="show=!show" x-text="show?'Hide':'Show'"></button>
+      </td>
+      <td style="padding:6px 0;text-align:right;">
+        <button class="secondary" style="padding:2px 10px;font-size:12px;"
+                onclick="navigator.clipboard.writeText('{{ n8n_password }}');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500);">Copy</button>
+      </td>
+    </tr>
+  </table>
+</div>
+{% endif %}
+
+{# ── Workflow list ──────────────────────────────────────────────────────── #}
+<div class="card" style="margin-top:12px;">
+  <div class="flex-between">
+    <h3 style="margin:0;">Workflows ({{ workflows|length }})</h3>
+    <button class="secondary"
+            hx-get="/companies/{{ company.id }}/n8n/workflows"
+            hx-target="#workflow-list"
+            hx-swap="innerHTML">Refresh</button>
+  </div>
+
+  <div id="workflow-list" style="margin-top:10px;">
+    {% include "_n8n_workflows.html" %}
+  </div>
+</div>
+
+{# ── Template library ───────────────────────────────────────────────────── #}
+<div class="card" style="margin-top:12px;">
+  <h3>Template Library ({{ templates|length }})</h3>
+  <p class="muted">Templates are portable workflow blueprints you can push into any company's n8n project.</p>
+
+  {% if templates %}
+  {% for t in templates %}
+  <div class="log-entry flex-between">
+    <div>
+      <strong>{{ t.name }}</strong>
+      {% if t.description %}<span class="muted"> — {{ t.description }}</span>{% endif %}
+    </div>
+    <div class="row" style="flex:none;gap:6px;">
+      <form method="post" action="/companies/{{ company.id }}/n8n/workflow/from-template/{{ t.id }}" style="margin:0;">
+        <button type="submit" class="secondary">Use in this company</button>
+      </form>
+      <form method="post" action="/n8n/templates/{{ t.id }}/delete" style="margin:0;"
+            onsubmit="return confirm('Delete template {{ t.name }}?');">
+        <input type="hidden" name="company_id" value="{{ company.id }}">
+        <button type="submit" class="danger">Delete</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="muted">No templates saved yet. Open a workflow in n8n, then use "Save as template" below.</div>
+  {% endif %}
+</div>
+
+{# ── Save workflow as template ──────────────────────────────────────────── #}
+{% if workflows %}
+<div class="card" style="margin-top:12px;">
+  <h3>Save a workflow as a template</h3>
+  <form method="post" action="" id="save-template-form">
+    <label>Workflow to save</label>
+    <select name="" id="save-wf-select" onchange="
+      var wid = this.value;
+      document.getElementById('save-template-form').action = '/companies/{{ company.id }}/n8n/workflow/' + wid + '/save-template';
+    " required>
+      <option value="">-- Select workflow --</option>
+      {% for wf in workflows %}
+      <option value="{{ wf.id }}">{{ wf.name }}</option>
+      {% endfor %}
+    </select>
+    <label>Template name</label>
+    <input name="name" required placeholder="e.g. Weekly report sender">
+    <label>Description (optional)</label>
+    <input name="description" placeholder="What this workflow does">
+    <button type="submit" style="margin-top:8px;">Save as template</button>
+  </form>
+</div>
+{% endif %}
+
+{% endif %}{# end n8n_running #}
+
+<div class="row" style="margin-top:16px;">
+  <a class="card" href="/companies/{{ company.id }}/settings" style="display:block;text-align:center;">Company Settings</a>
+</div>
+{% endblock %}

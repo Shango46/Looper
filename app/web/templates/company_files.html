@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Files — {{ company.name }} — Looper{% endblock %}
+{% block content %}
+<div class="flex-between" style="margin-bottom:16px;">
+  <h2>&#128193; {{ company.name }} — Files</h2>
+  <a href="/companies/{{ company.id }}">&larr; Back to company</a>
+</div>
+<div class="muted" style="margin-bottom:14px;font-size:12px;">{{ company.folder_path }}</div>
+
+<div id="file-browser">
+  {% include "_file_listing.html" %}
+</div>
+
+<div id="editor-pane" style="margin-top:16px;"></div>
+{% endblock %}

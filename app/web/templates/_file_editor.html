@@ -1,0 +1,21 @@
+<div class="card" style="margin-top:0;">
+  <div class="flex-between" style="margin-bottom:10px;">
+    <strong style="font-size:14px;">&#9998; {{ name }}</strong>
+    <div class="row" style="gap:8px;align-items:center;">
+      <span id="save-result"></span>
+      <button class="secondary" style="padding:3px 10px;font-size:13px;"
+              onclick="document.getElementById('editor-pane').innerHTML=''">&#10005; Close</button>
+    </div>
+  </div>
+  <form hx-post="/companies/{{ company.id }}/files/write"
+        hx-target="#save-result"
+        hx-swap="innerHTML"
+        style="margin:0;">
+    <input type="hidden" name="path" value="{{ path }}">
+    <textarea name="content"
+              style="font-family:monospace;font-size:13px;min-height:420px;resize:vertical;width:100%;box-sizing:border-box;white-space:pre;">{{ content }}</textarea>
+    <div style="margin-top:8px;">
+      <button type="submit">Save</button>
+    </div>
+  </form>
+</div>

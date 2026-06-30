@@ -1,0 +1,22 @@
+{% if docs %}
+{% for doc in docs %}
+<div class="log-entry flex-between" style="margin-bottom:6px;">
+  <div>
+    <strong>{{ doc.filename }}</strong>
+    <span class="badge">{{ doc.source_type }}</span>
+    <span class="muted">{{ doc.total_chunks }} chunk(s)</span>
+    {% if doc.created_at %}
+    <span class="muted" style="font-size:11px;"> · {{ doc.created_at[:10] }}</span>
+    {% endif %}
+  </div>
+  <form method="post"
+        action="/companies/{{ company.id }}/rag/documents/{{ doc.doc_id }}/delete"
+        onsubmit="return confirm('Remove \'{{ doc.filename }}\' from the knowledge base?');"
+        style="margin:0;">
+    <button type="submit" class="danger" style="padding:3px 10px;font-size:12px;">Remove</button>
+  </form>
+</div>
+{% endfor %}
+{% else %}
+<div class="muted">No documents indexed yet.</div>
+{% endif %}

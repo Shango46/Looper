@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.agents.browser import BROWSER_TOOL_NAMES, dispatch_browser_tool
+from app.agents.company_tools import COMPANY_TOOL_IMPLS
 from app.agents.delegation import create_delegated_child_task, create_report_task, on_task_finished
 from app.agents.memory import count_tokens, get_memory_slice, record_memory
 from app.agents.risk import evaluate_risk
@@ -13,7 +14,7 @@ from app.agents.tools import get_tool_impl, get_tools_for
 from app.agents.usage import budget_exceeded, record_usage
 from app.config import MAX_TOOL_ITERATIONS, TASK_WALL_CLOCK_TIMEOUT_SECONDS
 from app.crypto import decrypt
-from app.db.models import Agent, ApprovalRequest, CachedModel, Company, McpServer, Skill, SkillGrant, Task
+from app.db.models import Agent, ApprovalRequest, CachedModel, Company, McpServer, Skill, SkillGrant, Task, WebSearchRecord
 from app.db.session import session_scope
 from app.mcp.client import call_tool as call_mcp_tool
 from app.mcp.runtime import build_mcp_context
@@ -84,6 +85,21 @@ async def _load_context(task_id: int) -> dict:
             "tool_schemas": tool_schemas,
             "skill_tool_map": skill_ctx["tool_map"],
             "mcp_tool_map": mcp_ctx["tool_map"],
+            "company_ctx": {
+                "company_id": company.id,
+                "brave_api_key_encrypted": company.brave_api_key_encrypted,
+                "email_display_name": company.email_display_name,
+                "email_smtp_host": company.email_smtp_host,
+                "email_smtp_port": company.email_smtp_port,
+                "email_smtp_username": company.email_smtp_username,
+                "email_smtp_password_encrypted": company.email_smtp_password_encrypted,
+                "email_smtp_use_tls": company.email_smtp_use_tls,
+                "email_imap_host": company.email_imap_host,
+                "email_imap_port": company.email_imap_port,
+                "email_imap_username": company.email_imap_username,
+                "email_imap_password_encrypted": company.email_imap_password_encrypted,
+                "email_imap_use_ssl": company.email_imap_use_ssl,
+            },
         }
 
 
@@ -127,6 +143,7 @@ async def run_step(task_id: int) -> str:
     agent_id = ctx["agent_id"]
     company_id = ctx["company_id"]
     company_folder = ctx["company_folder"]
+    company_ctx = ctx["company_ctx"]
     api_key = ctx["api_key"]
     messages = ctx["messages"]
     iterations = ctx["iterations"]
@@ -360,17 +377,34 @@ async def run_step(task_id: int) -> str:
                     )
                 continue
 
-            impl = get_tool_impl(name)
-            if not impl:
-                result_str = f"Error: unknown tool '{name}'."
-            else:
+            company_impl = COMPANY_TOOL_IMPLS.get(name)
+            if company_impl:
                 try:
-                    result_str = impl(company_folder=company_folder, **args)
+                    result_str = company_impl(company_ctx=company_ctx, company_folder=company_folder, **args)
                 except TypeError as e:
                     result_str = f"Error: bad arguments for '{name}': {e}"
                 except Exception as e:
                     logger.exception("Tool %s failed", name)
                     result_str = f"Error running '{name}': {e}"
+                if name == "web_search" and not result_str.startswith("Web search is not available"):
+                    async with session_scope() as session:
+                        session.add(WebSearchRecord(
+                            company_id=company_id,
+                            agent_id=agent_id,
+                            query=args.get("query", ""),
+                        ))
+            else:
+                impl = get_tool_impl(name)
+                if not impl:
+                    result_str = f"Error: unknown tool '{name}'."
+                else:
+                    try:
+                        result_str = impl(company_folder=company_folder, **args)
+                    except TypeError as e:
+                        result_str = f"Error: bad arguments for '{name}': {e}"
+                    except Exception as e:
+                        logger.exception("Tool %s failed", name)
+                        result_str = f"Error running '{name}': {e}"
 
             messages.append(
                 {"role": "tool", "tool_call_id": tc["id"], "name": name, "content": str(result_str)}

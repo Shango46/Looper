@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Knowledge Base — {{ company.name }}{% endblock %}
+{% block content %}
+<div class="flex-between">
+  <h2>{{ company.name }} — Knowledge Base</h2>
+  <a href="/companies/{{ company.id }}">&larr; Back to {{ company.name }}</a>
+</div>
+
+{% if indexed %}
+<div class="card" style="border-color:var(--ok);margin-top:16px;">
+  <strong>Indexed successfully</strong> — {{ indexed }} chunk(s) added to the knowledge base.
+</div>
+{% endif %}
+
+{# ── Stats ── #}
+<div class="card" style="margin-top:16px;">
+  <div class="flex-between">
+    <div>
+      <strong>Collection:</strong>
+      <span class="badge active">{{ stats.documents }} document(s)</span>
+      <span class="badge">{{ stats.chunks }} chunk(s)</span>
+      <span class="muted" style="margin-left:8px;font-size:12px;">Embeddings: BAAI/bge-small-en-v1.5 · isolated to this company</span>
+    </div>
+    <button class="secondary"
+            hx-get="/companies/{{ company.id }}/rag/documents"
+            hx-target="#doc-list"
+            hx-swap="innerHTML">Refresh</button>
+  </div>
+  <p class="muted" style="margin-top:6px;font-size:12px;">
+    The first time you add a document, the embedding model (~130 MB) will be downloaded automatically. Subsequent operations are instant.
+  </p>
+</div>
+
+{# ── Add content ── #}
+<div class="card" style="margin-top:12px;" x-data="{tab:'file'}">
+  <h3 style="margin-top:0;">Add to Knowledge Base</h3>
+  <div class="row" style="gap:6px;margin-bottom:12px;">
+    <button type="button" :class="tab==='file' ? '' : 'secondary'" @click="tab='file'">Upload File</button>
+    <button type="button" :class="tab==='text' ? '' : 'secondary'" @click="tab='text'">Paste Text</button>
+  </div>
+
+  <div x-show="tab==='file'">
+    <form method="post" action="/companies/{{ company.id }}/rag/upload" enctype="multipart/form-data">
+      <label>File (max 20 MB)</label>
+      <input type="file" name="file" required
+             accept="{{ supported_ext | join(',') }},.pdf">
+      <p class="muted" style="font-size:12px;margin:4px 0 8px;">
+        Supported: .pdf, {{ supported_ext | join(', ') }}
+      </p>
+      <button type="submit">Upload &amp; Index</button>
+    </form>
+  </div>
+
+  <div x-show="tab==='text'" style="display:none;">
+    <form method="post" action="/companies/{{ company.id }}/rag/text">
+      <label>Title</label>
+      <input name="title" required placeholder="e.g. Company handbook, Product notes…">
+      <label>Content</label>
+      <textarea name="content" rows="8" required placeholder="Paste any text here…"></textarea>
+      <button type="submit" style="margin-top:8px;">Index Text</button>
+    </form>
+  </div>
+</div>
+
+{# ── Document list ── #}
+<div class="card" style="margin-top:12px;">
+  <h3 style="margin-top:0;">Indexed Documents</h3>
+  <div id="doc-list">
+    {% include "_rag_documents.html" %}
+  </div>
+</div>
+
+{# ── Search test ── #}
+<div class="card" style="margin-top:12px;">
+  <h3 style="margin-top:0;">Test Search</h3>
+  <p class="muted">Ask a question or enter keywords to verify retrieval is working.</p>
+  <form hx-post="/companies/{{ company.id }}/rag/search"
+        hx-target="#search-results"
+        hx-swap="innerHTML"
+        hx-indicator="#search-spinner">
+    <div class="row" style="gap:8px;">
+      <input name="query" required placeholder="e.g. What is our refund policy?" style="flex:1;">
+      <button type="submit">Search</button>
+      <span id="search-spinner" class="muted htmx-indicator">Searching…</span>
+    </div>
+  </form>
+  <div id="search-results" style="margin-top:12px;"></div>
+</div>
+
+<div class="row" style="margin-top:16px;">
+  <a class="card" href="/companies/{{ company.id }}/settings" style="display:block;text-align:center;">Company Settings</a>
+</div>
+{% endblock %}

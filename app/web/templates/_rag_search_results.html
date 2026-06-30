@@ -1,0 +1,18 @@
+{% if results %}
+<div class="muted" style="font-size:12px;margin-bottom:8px;">{{ results|length }} result(s) for "<em>{{ query }}</em>"</div>
+{% for r in results %}
+<div class="card" style="margin-bottom:8px;padding:10px 14px;">
+  <div class="flex-between" style="margin-bottom:6px;">
+    <span><strong>{{ r.filename }}</strong>
+      <span class="muted" style="font-size:11px;">chunk {{ r.chunk_index + 1 }}/{{ r.total_chunks }}</span>
+    </span>
+    {% if r.score is not none %}
+    <span class="badge" style="font-size:11px;">score {{ r.score }}</span>
+    {% endif %}
+  </div>
+  <p style="margin:0;font-size:13px;white-space:pre-wrap;word-break:break-word;max-height:160px;overflow:auto;">{{ r.text }}</p>
+</div>
+{% endfor %}
+{% elif query %}
+<div class="muted">No results found for "<em>{{ query }}</em>".</div>
+{% endif %}

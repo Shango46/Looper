@@ -62,6 +62,289 @@
 </div>
 {% endif %}
 
+<div class="card" x-data="{ mode: '{{ company.n8n_mode }}' }">
+  <h3>Automations (n8n)</h3>
+  <p class="muted">By default, Looper runs a shared self-hosted n8n instance. Switch to cloud if you have an n8n Cloud or self-hosted instance you manage separately.</p>
+  <form method="post" action="/companies/{{ company.id }}/n8n/settings">
+    <label>Mode</label>
+    <select name="n8n_mode" x-model="mode">
+      <option value="self_hosted">Self-hosted (managed by Looper)</option>
+      <option value="cloud">Cloud / external instance</option>
+    </select>
+    <div x-show="mode === 'cloud'" style="margin-top:10px;">
+      <label>n8n URL</label>
+      <input name="n8n_cloud_url" value="{{ company.n8n_cloud_url or '' }}" placeholder="https://your-n8n.example.com">
+      <label>API key (leave blank to keep current)</label>
+      <input name="n8n_cloud_api_key" type="password" placeholder="n8n_api_...">
+      <div style="margin-top:8px;" x-data="{result: '', testing: false}">
+        <button type="button" class="secondary" :disabled="testing" @click="
+          testing = true; result = '';
+          const url = document.querySelector('[name=n8n_cloud_url]').value;
+          const key = document.querySelector('[name=n8n_cloud_api_key]').value;
+          const fd = new FormData();
+          fd.append('n8n_cloud_url', url); fd.append('n8n_cloud_api_key', key);
+          fetch('/companies/{{ company.id }}/n8n/test-connection', {method:'POST', body: fd})
+            .then(r => r.json()).then(d => { result = d.ok ? '✓ Connected' : '✗ Connection failed'; testing = false; })
+            .catch(() => { result = '✗ Error'; testing = false; });
+        ">Test connection</button>
+        <span class="muted" x-text="result" style="margin-left:8px;"></span>
+      </div>
+    </div>
+    <button type="submit" style="margin-top:12px;">Save n8n settings</button>
+  </form>
+  <div style="margin-top:10px;">
+    <a href="/companies/{{ company.id }}/n8n">→ Open Automations page</a>
+  </div>
+</div>
+
+<div class="card" id="webhook">
+  <h3>Inbound Webhook</h3>
+  <p class="muted">Lets external tools (n8n, Zapier, scripts) trigger agent tasks by sending a POST request. Each webhook call creates a task for this company's CEO.</p>
+
+  {% if company.webhook_secret %}
+  <div style="margin-bottom:12px;">
+    <label style="font-size:12px;color:var(--muted);">Webhook URL</label>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+      <code style="background:var(--bg2);padding:6px 10px;border-radius:4px;font-size:13px;flex:1;word-break:break-all;">{{ request.base_url }}webhook/{{ company.webhook_secret }}</code>
+      <button type="button" class="secondary" style="flex:none;font-size:12px;"
+              onclick="navigator.clipboard.writeText('{{ request.base_url }}webhook/{{ company.webhook_secret }}').then(()=>{this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)})">Copy</button>
+    </div>
+  </div>
+  <details style="margin-bottom:12px;">
+    <summary class="muted" style="cursor:pointer;font-size:13px;">Show request format</summary>
+    <pre style="margin-top:8px;font-size:12px;background:var(--bg2);padding:10px;border-radius:4px;overflow-x:auto;">POST {{ request.base_url }}webhook/{{ company.webhook_secret }}
+Content-Type: application/json
+
+{
+  "instruction": "Summarise last week's sales and email the report to boss@example.com",
+  "target_agent_id": 42  // optional — omit to send to CEO
+}</pre>
+    <div class="muted" style="font-size:12px;margin-top:6px;">
+      Response: <code>{"ok": true, "task_id": N}</code>
+    </div>
+  </details>
+  <div style="display:flex;gap:8px;">
+    <form method="post" action="/companies/{{ company.id }}/webhook/generate">
+      <button type="submit" class="secondary">Regenerate token</button>
+    </form>
+    <form method="post" action="/companies/{{ company.id }}/webhook/revoke" onsubmit="return confirm('Revoke webhook token? Any existing integrations will stop working.');">
+      <button type="submit" class="danger">Revoke</button>
+    </form>
+  </div>
+  {% else %}
+  <div class="muted" style="margin-bottom:10px;">No webhook token generated yet.</div>
+  <form method="post" action="/companies/{{ company.id }}/webhook/generate">
+    <button type="submit">Generate webhook token</button>
+  </form>
+  {% endif %}
+</div>
+
+<div class="card" id="brave">
+  <h3>Web Search (Brave Search API)</h3>
+  <details style="margin-bottom:14px;">
+    <summary class="muted" style="cursor:pointer;font-size:13px;">What is this and how do I get a key?</summary>
+    <div style="margin-top:10px;font-size:13px;line-height:1.6;">
+      <p class="muted">Agents use the <strong>Brave Search API</strong> to search the live web — finding current news, documentation, prices, or any real-time information not in the company knowledge base.</p>
+      <p class="muted" style="margin-top:6px;"><strong>Free tier:</strong> 2,000 queries/month at no cost. No credit card required.</p>
+      <p class="muted" style="margin-top:6px;"><strong>To get an API key:</strong></p>
+      <ol class="muted" style="margin:6px 0 0 18px;padding:0;">
+        <li>Go to <strong>api.search.brave.com</strong> and create a free account.</li>
+        <li>Under <em>Subscriptions</em>, select the <strong>Free AI</strong> plan (2,000 req/month).</li>
+        <li>Copy the API key shown and paste it below.</li>
+      </ol>
+      <p class="muted" style="margin-top:8px;">The key is stored encrypted. Agents call <code>web_search(query)</code> and results are injected directly into their context.</p>
+    </div>
+  </details>
+
+  <form method="post" action="/companies/{{ company.id }}/brave/settings">
+    <label>Brave Search API key {% if company.brave_api_key_encrypted %}<span class="badge active">configured</span>{% else %}<span class="badge vacant">not set</span>{% endif %}</label>
+    <input name="brave_api_key" type="password" placeholder="{% if company.brave_api_key_encrypted %}Leave blank to keep current key{% else %}BSA...{% endif %}">
+    <button type="submit" style="margin-top:8px;">Save key</button>
+  </form>
+
+  {% if company.brave_api_key_encrypted %}
+  <form method="post" action="/companies/{{ company.id }}/brave/revoke" style="margin-top:8px;"
+        onsubmit="return confirm('Remove Brave API key? Agents will no longer be able to search the web.');">
+    <button type="submit" class="danger">Remove key</button>
+  </form>
+  {% endif %}
+
+  <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
+    <h4 style="margin:0 0 8px;">Usage — {{ brave_month }}</h4>
+    <div class="muted" style="font-size:13px;">
+      <strong>{{ brave_monthly_total }}</strong> search request{{ 's' if brave_monthly_total != 1 else '' }} this month
+      <span style="font-size:11px;">(free tier: 2,000/month)</span>
+    </div>
+    {% if brave_monthly_total > 0 %}
+    <div style="margin-top:4px;background:var(--bg2);border-radius:4px;height:6px;overflow:hidden;">
+      <div style="height:100%;background:var(--ok);width:{{ [((brave_monthly_total / 2000) * 100)|int, 100]|min }}%;transition:width 0.3s;"></div>
+    </div>
+    {% endif %}
+    {% if brave_agent_stats %}
+    <table style="width:100%;margin-top:12px;font-size:12px;border-collapse:collapse;">
+      <thead>
+        <tr>
+          <th style="text-align:left;padding:4px 8px;border-bottom:1px solid var(--border);color:var(--muted);">Agent</th>
+          <th style="text-align:right;padding:4px 8px;border-bottom:1px solid var(--border);color:var(--muted);">Searches</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for agent_name, count in brave_agent_stats %}
+        <tr>
+          <td style="padding:4px 8px;">{{ agent_name }}</td>
+          <td style="padding:4px 8px;text-align:right;">{{ count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="muted" style="font-size:12px;margin-top:8px;">No searches yet this month.</div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card" x-data="{
+  smtpResult: '', smtpTesting: false,
+  imapResult: '', imapTesting: false,
+  testSmtp() {
+    this.smtpTesting = true; this.smtpResult = '';
+    const fd = new FormData(this.$el.closest('form') || document.querySelector('#email-form'));
+    fetch('/companies/{{ company.id }}/email/test-smtp', {method:'POST', body: fd})
+      .then(r => r.json()).then(d => { this.smtpResult = (d.ok ? '✓ ' : '✗ ') + d.message; this.smtpTesting = false; })
+      .catch(() => { this.smtpResult = '✗ Request failed'; this.smtpTesting = false; });
+  },
+  testImap() {
+    this.imapTesting = true; this.imapResult = '';
+    const fd = new FormData(this.$el.closest('form') || document.querySelector('#email-form'));
+    fetch('/companies/{{ company.id }}/email/test-imap', {method:'POST', body: fd})
+      .then(r => r.json()).then(d => { this.imapResult = (d.ok ? '✓ ' : '✗ ') + d.message; this.imapTesting = false; })
+      .catch(() => { this.imapResult = '✗ Request failed'; this.imapTesting = false; });
+  }
+}">
+  <h3>Email (SMTP / IMAP)</h3>
+  <p class="muted">Configure email access for agents in this company. Credentials are stored encrypted.</p>
+  <form method="post" action="/companies/{{ company.id }}/email/settings" id="email-form">
+
+    <label>Display name (shown in From field)</label>
+    <input name="email_display_name" value="{{ company.email_display_name or '' }}" placeholder="The Loop">
+
+    <h4 style="margin:18px 0 8px;">Outgoing Mail (SMTP)</h4>
+    <div style="display:grid;grid-template-columns:1fr 100px;gap:8px;">
+      <div>
+        <label>SMTP host</label>
+        <input name="email_smtp_host" value="{{ company.email_smtp_host or '' }}" placeholder="smtp.gmail.com">
+      </div>
+      <div>
+        <label>Port</label>
+        <input name="email_smtp_port" type="number" value="{{ company.email_smtp_port or 587 }}" placeholder="587">
+      </div>
+    </div>
+    <label>SMTP username / email address</label>
+    <input name="email_smtp_username" value="{{ company.email_smtp_username or '' }}" placeholder="you@example.com">
+    <label>SMTP password (leave blank to keep current)</label>
+    <input name="email_smtp_password" type="password" placeholder="••••••••">
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+      <input type="checkbox" name="email_smtp_use_tls" value="true" style="width:auto;display:inline;"
+             {% if company.email_smtp_use_tls %}checked{% endif %}>
+      Use STARTTLS (port 587) — uncheck for implicit SSL (port 465)
+    </label>
+    <div style="margin-top:8px;" x-data>
+      <button type="button" class="secondary" :disabled="smtpTesting" @click="testSmtp()">Test SMTP</button>
+      <span class="muted" x-text="smtpResult" style="margin-left:8px;font-size:13px;"></span>
+    </div>
+
+    <h4 style="margin:18px 0 8px;">Incoming Mail (IMAP)</h4>
+    <div style="display:grid;grid-template-columns:1fr 100px;gap:8px;">
+      <div>
+        <label>IMAP host</label>
+        <input name="email_imap_host" value="{{ company.email_imap_host or '' }}" placeholder="imap.gmail.com">
+      </div>
+      <div>
+        <label>Port</label>
+        <input name="email_imap_port" type="number" value="{{ company.email_imap_port or 993 }}" placeholder="993">
+      </div>
+    </div>
+    <label>IMAP username / email address</label>
+    <input name="email_imap_username" value="{{ company.email_imap_username or '' }}" placeholder="you@example.com">
+    <label>IMAP password (leave blank to keep current)</label>
+    <input name="email_imap_password" type="password" placeholder="••••••••">
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+      <input type="checkbox" name="email_imap_use_ssl" value="true" style="width:auto;display:inline;"
+             {% if company.email_imap_use_ssl %}checked{% endif %}>
+      Use SSL/TLS (recommended, port 993)
+    </label>
+    <div style="margin-top:8px;" x-data>
+      <button type="button" class="secondary" :disabled="imapTesting" @click="testImap()">Test IMAP</button>
+      <span class="muted" x-text="imapResult" style="margin-left:8px;font-size:13px;"></span>
+    </div>
+
+    <details style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
+      <summary class="muted" style="cursor:pointer;font-size:13px;">Provider setup tips &amp; settings reference</summary>
+      <div style="margin-top:12px;font-size:13px;line-height:1.65;display:flex;flex-direction:column;gap:14px;">
+
+        <div>
+          <strong>Gmail (personal) &amp; Google Workspace</strong>
+          <ul class="muted" style="margin:5px 0 0 18px;padding:0;">
+            <li>Enable 2-Step Verification, then go to <em>Google Account → Security → App passwords</em> and generate a password for "Mail". Use that instead of your real password.</li>
+            <li>SMTP: <code>smtp.gmail.com</code> · port <code>587</code> · STARTTLS ✓</li>
+            <li>IMAP: <code>imap.gmail.com</code> · port <code>993</code> · SSL ✓</li>
+            <li>Username is your full Gmail address (<code>you@gmail.com</code> or <code>you@yourdomain.com</code> for Workspace).</li>
+          </ul>
+        </div>
+
+        <div>
+          <strong>Zoho Mail</strong>
+          <ul class="muted" style="margin:5px 0 0 18px;padding:0;">
+            <li>Go to <em>Zoho Mail → Settings → Security → App Passwords</em> to generate a password for Looper.</li>
+            <li>SMTP: <code>smtp.zoho.com</code> · port <code>587</code> · STARTTLS ✓ &nbsp;(or port <code>465</code> · SSL, uncheck STARTTLS)</li>
+            <li>IMAP: <code>imap.zoho.com</code> · port <code>993</code> · SSL ✓</li>
+            <li>Free tier allows up to 5 users and includes SMTP/IMAP access.</li>
+          </ul>
+        </div>
+
+        <div>
+          <strong>Fastmail</strong>
+          <ul class="muted" style="margin:5px 0 0 18px;padding:0;">
+            <li>Go to <em>Settings → Privacy &amp; Security → Third-party apps → New app password</em>. Use that password here.</li>
+            <li>SMTP: <code>smtp.fastmail.com</code> · port <code>587</code> · STARTTLS ✓</li>
+            <li>IMAP: <code>imap.fastmail.com</code> · port <code>993</code> · SSL ✓</li>
+          </ul>
+        </div>
+
+        <div>
+          <strong>Outlook / Microsoft 365</strong>
+          <ul class="muted" style="margin:5px 0 0 18px;padding:0;">
+            <li>Microsoft is moving away from plain-password SMTP — check that your tenant still allows <em>SMTP AUTH</em> (admin panel: <em>Users → Mail → SMTP AUTH</em>). Personal @outlook.com accounts still work.</li>
+            <li>SMTP: <code>smtp.office365.com</code> · port <code>587</code> · STARTTLS ✓</li>
+            <li>IMAP: <code>outlook.office365.com</code> · port <code>993</code> · SSL ✓</li>
+          </ul>
+        </div>
+
+        <div>
+          <strong>General tips</strong>
+          <ul class="muted" style="margin:5px 0 0 18px;padding:0;">
+            <li>Always use an <em>App Password</em> (not your main account password) — it's scoped, revocable, and works even if you have 2FA.</li>
+            <li>Use the <strong>Test SMTP</strong> and <strong>Test IMAP</strong> buttons above before saving to catch misconfigured ports or wrong credentials early.</li>
+            <li>For best deliverability, make sure your sending domain has <strong>SPF</strong>, <strong>DKIM</strong>, and <strong>DMARC</strong> DNS records — without them, outgoing agent emails may land in spam.</li>
+            <li>SMTP username and IMAP username are usually the same full email address.</li>
+          </ul>
+        </div>
+
+      </div>
+    </details>
+
+    <button type="submit" style="margin-top:14px;">Save email settings</button>
+  </form>
+
+  {% if company.email_smtp_username or company.email_imap_username %}
+  <div class="muted" style="margin-top:10px;font-size:12px;">
+    Currently configured:
+    {% if company.email_smtp_username %}SMTP as <strong>{{ company.email_smtp_username }}</strong>{% endif %}
+    {% if company.email_imap_username %} · IMAP as <strong>{{ company.email_imap_username }}</strong>{% endif %}
+  </div>
+  {% endif %}
+</div>
+
 <div class="card">
   <h3>MCP Servers</h3>
   <p class="muted">Registered here, every active agent in this company can use these tools automatically (no per-agent grant step — adding a server here is itself the trust decision, unlike agent-created Skills).</p>

@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -6,6 +7,8 @@ from fastapi.staticfiles import StaticFiles
 from app.agents.browser import close_all_browsers
 from app.config import BASE_DIR
 from app.db.session import init_db
+from app.n8n import client as n8n_client
+from app.n8n.process import start_n8n_async, stop_n8n
 from app.scheduler.heartbeats import start_heartbeat_scheduler, stop_heartbeat_scheduler
 from app.web.api import agent_templates as api_agent_templates
 from app.web.api import agents as api_agents
@@ -18,7 +21,15 @@ from app.web.api import models as api_models
 from app.web.api import skills as api_skills
 from app.web.api import tasks as api_tasks
 from app.web.routes import agent_templates, agents, approvals, chat, companies, heartbeats, mcp, misc, skills, tasks
+from app.web.routes import n8n_routes, rag_routes, webhook_routes
+from app.web.routes import files_web, activity
 from app.worker import requeue_pending_on_startup, start_workers, stop_workers
+
+
+async def _boot_n8n() -> None:
+    ready = await start_n8n_async()
+    if ready:
+        await n8n_client.ensure_setup()
 
 
 @asynccontextmanager
@@ -27,10 +38,12 @@ async def lifespan(app: FastAPI):
     start_workers()
     await requeue_pending_on_startup()
     start_heartbeat_scheduler()
+    asyncio.create_task(_boot_n8n())
     yield
     await stop_heartbeat_scheduler()
     await stop_workers()
     await close_all_browsers()
+    stop_n8n()
 
 
 app = FastAPI(title="Looper", lifespan=lifespan)
@@ -46,6 +59,11 @@ app.include_router(heartbeats.router)
 app.include_router(skills.router)
 app.include_router(chat.router)
 app.include_router(mcp.router)
+app.include_router(n8n_routes.router)
+app.include_router(rag_routes.router)
+app.include_router(webhook_routes.router)
+app.include_router(files_web.router)
+app.include_router(activity.router)
 
 app.include_router(api_auth.router, prefix="/api/v1")
 app.include_router(api_me.router, prefix="/api/v1")

@@ -1,8 +1,9 @@
+import datetime as dt
 from pathlib import Path
 
 from fastapi import APIRouter, Form, HTTPException, Request
-from fastapi.responses import RedirectResponse
-from sqlalchemy import select
+from fastapi.responses import JSONResponse, RedirectResponse
+from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 from app.agents.lifecycle import LifecycleError
@@ -10,7 +11,7 @@ from app.agents.lifecycle import create_task_for_ceo as create_task_for_ceo_life
 from app.agents.lifecycle import hire_agent as hire_agent_lifecycle
 from app.config import MAX_COMPANIES
 from app.crypto import encrypt
-from app.db.models import Agent, AgentTemplate, CachedModel, Company, McpServer, Settings, Task
+from app.db.models import Agent, AgentTemplate, CachedModel, Company, McpServer, Settings, Task, WebSearchRecord
 from app.db.session import session_scope
 from app.remote.auth import disable_remote_access, generate_code, rotate_code
 from app.remote.tailscale import get_tailscale_ip
@@ -178,6 +179,7 @@ async def instruct_company(request: Request, company_id: int, instruction: str =
 
 @router.get("/companies/{company_id}/settings")
 async def company_settings(request: Request, company_id: int, new_code: str | None = None):
+    month_start = dt.datetime.now(dt.timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     async with session_scope() as session:
         company = await session.get(Company, company_id)
         if not company:
@@ -187,6 +189,26 @@ async def company_settings(request: Request, company_id: int, new_code: str | No
         ).scalars().all()
         global_settings = await session.get(Settings, 1)
         remote_access_enabled = global_settings.remote_access_enabled if global_settings else False
+
+        brave_monthly_total = (await session.execute(
+            select(func.count(WebSearchRecord.id)).where(
+                WebSearchRecord.company_id == company_id,
+                WebSearchRecord.created_at >= month_start,
+            )
+        )).scalar_one()
+
+        brave_agent_stats = (await session.execute(
+            select(Agent.name, func.count(WebSearchRecord.id).label("cnt"))
+            .join(Agent, Agent.id == WebSearchRecord.agent_id)
+            .where(
+                WebSearchRecord.company_id == company_id,
+                WebSearchRecord.created_at >= month_start,
+            )
+            .group_by(Agent.id, Agent.name)
+            .order_by(func.count(WebSearchRecord.id).desc())
+            .limit(10)
+        )).all()
+
     tailscale_ip = get_tailscale_ip() if remote_access_enabled else None
     return templates.TemplateResponse(
         "company_settings.html",
@@ -197,6 +219,9 @@ async def company_settings(request: Request, company_id: int, new_code: str | No
             "tailscale_ip": tailscale_ip,
             "mcp_servers": mcp_servers,
             "remote_access_enabled": remote_access_enabled,
+            "brave_monthly_total": brave_monthly_total,
+            "brave_agent_stats": brave_agent_stats,
+            "brave_month": month_start.strftime("%B %Y"),
         },
     )
 
@@ -285,3 +310,142 @@ async def company_tasks(request: Request, company_id: int):
     )
 
 
+# ── Email settings ────────────────────────────────────────────────────────────
+
+@router.post("/companies/{company_id}/email/settings")
+async def save_email_settings(
+    company_id: int,
+    email_display_name: str = Form(""),
+    email_smtp_host: str = Form(""),
+    email_smtp_port: str = Form(""),
+    email_smtp_username: str = Form(""),
+    email_smtp_password: str = Form(""),
+    email_smtp_use_tls: bool = Form(False),
+    email_imap_host: str = Form(""),
+    email_imap_port: str = Form(""),
+    email_imap_username: str = Form(""),
+    email_imap_password: str = Form(""),
+    email_imap_use_ssl: bool = Form(False),
+):
+    async with session_scope() as session:
+        company = await session.get(Company, company_id)
+        if not company:
+            raise HTTPException(404, "Company not found")
+
+        company.email_display_name = email_display_name.strip() or None
+        company.email_smtp_host = email_smtp_host.strip() or None
+        company.email_smtp_port = int(email_smtp_port) if email_smtp_port.strip().isdigit() else None
+        company.email_smtp_username = email_smtp_username.strip() or None
+        company.email_smtp_use_tls = email_smtp_use_tls
+        if email_smtp_password.strip():
+            company.email_smtp_password_encrypted = encrypt(email_smtp_password.strip())
+
+        company.email_imap_host = email_imap_host.strip() or None
+        company.email_imap_port = int(email_imap_port) if email_imap_port.strip().isdigit() else None
+        company.email_imap_username = email_imap_username.strip() or None
+        company.email_imap_use_ssl = email_imap_use_ssl
+        if email_imap_password.strip():
+            company.email_imap_password_encrypted = encrypt(email_imap_password.strip())
+
+    return RedirectResponse(f"/companies/{company_id}/settings", status_code=303)
+
+
+@router.post("/companies/{company_id}/email/test-smtp")
+async def test_smtp_connection(
+    company_id: int,
+    email_smtp_host: str = Form(""),
+    email_smtp_port: str = Form(""),
+    email_smtp_username: str = Form(""),
+    email_smtp_password: str = Form(""),
+    email_smtp_use_tls: bool = Form(False),
+):
+    from app.email_client import test_smtp
+
+    class _FakeCompany:
+        pass
+
+    c = _FakeCompany()
+    c.email_smtp_host = email_smtp_host.strip() or None
+    c.email_smtp_port = int(email_smtp_port) if email_smtp_port.strip().isdigit() else 587
+    c.email_smtp_username = email_smtp_username.strip() or None
+    c.email_smtp_use_tls = email_smtp_use_tls
+    c.email_smtp_password_encrypted = None
+
+    # If a password was provided in the form, use it directly (not yet saved/encrypted)
+    _raw_pw = email_smtp_password.strip()
+
+    def _override_smtp_password(_company):
+        return _raw_pw
+
+    import app.email_client as _ec
+    _orig = _ec._smtp_password
+    _ec._smtp_password = _override_smtp_password
+    try:
+        ok, msg = test_smtp(c)
+    finally:
+        _ec._smtp_password = _orig
+
+    return JSONResponse({"ok": ok, "message": msg})
+
+
+@router.post("/companies/{company_id}/email/test-imap")
+async def test_imap_connection(
+    company_id: int,
+    email_imap_host: str = Form(""),
+    email_imap_port: str = Form(""),
+    email_imap_username: str = Form(""),
+    email_imap_password: str = Form(""),
+    email_imap_use_ssl: bool = Form(False),
+):
+    from app.email_client import test_imap
+
+    class _FakeCompany:
+        pass
+
+    c = _FakeCompany()
+    c.email_imap_host = email_imap_host.strip() or None
+    c.email_imap_port = int(email_imap_port) if email_imap_port.strip().isdigit() else 993
+    c.email_imap_username = email_imap_username.strip() or None
+    c.email_imap_use_ssl = email_imap_use_ssl
+    c.email_imap_password_encrypted = None
+
+    _raw_pw = email_imap_password.strip()
+
+    def _override_imap_password(_company):
+        return _raw_pw
+
+    import app.email_client as _ec
+    _orig = _ec._imap_password
+    _ec._imap_password = _override_imap_password
+    try:
+        ok, msg = test_imap(c)
+    finally:
+        _ec._imap_password = _orig
+
+    return JSONResponse({"ok": ok, "message": msg})
+
+
+# ── Brave Search settings ─────────────────────────────────────────────────────
+
+@router.post("/companies/{company_id}/brave/settings")
+async def save_brave_settings(
+    company_id: int,
+    brave_api_key: str = Form(""),
+):
+    async with session_scope() as session:
+        company = await session.get(Company, company_id)
+        if not company:
+            raise HTTPException(404, "Company not found")
+        if brave_api_key.strip():
+            company.brave_api_key_encrypted = encrypt(brave_api_key.strip())
+    return RedirectResponse(f"/companies/{company_id}/settings#brave", status_code=303)
+
+
+@router.post("/companies/{company_id}/brave/revoke")
+async def revoke_brave_key(company_id: int):
+    async with session_scope() as session:
+        company = await session.get(Company, company_id)
+        if not company:
+            raise HTTPException(404, "Company not found")
+        company.brave_api_key_encrypted = None
+    return RedirectResponse(f"/companies/{company_id}/settings#brave", status_code=303)

@@ -7,9 +7,26 @@ logger = logging.getLogger("looper.db.migrate")
 
 # (column, SQL type, default clause) — additive only, never touches existing columns/data.
 COMPANY_COLUMNS = [
+    ("webhook_secret", "VARCHAR(64)", "NULL"),
+    ("brave_api_key_encrypted", "TEXT", "NULL"),
     ("remote_code_hash", "VARCHAR(64)", "NULL"),
     ("remote_code_version", "INTEGER", "0"),
     ("remote_code_set_at", "DATETIME", "NULL"),
+    ("n8n_mode", "VARCHAR(20)", "'self_hosted'"),
+    ("n8n_project_id", "VARCHAR(100)", "NULL"),
+    ("n8n_cloud_url", "VARCHAR(500)", "NULL"),
+    ("n8n_cloud_api_key_encrypted", "TEXT", "NULL"),
+    ("email_display_name", "VARCHAR(200)", "NULL"),
+    ("email_smtp_host", "VARCHAR(300)", "NULL"),
+    ("email_smtp_port", "INTEGER", "NULL"),
+    ("email_smtp_username", "VARCHAR(300)", "NULL"),
+    ("email_smtp_password_encrypted", "TEXT", "NULL"),
+    ("email_smtp_use_tls", "BOOLEAN", "1"),
+    ("email_imap_host", "VARCHAR(300)", "NULL"),
+    ("email_imap_port", "INTEGER", "NULL"),
+    ("email_imap_username", "VARCHAR(300)", "NULL"),
+    ("email_imap_password_encrypted", "TEXT", "NULL"),
+    ("email_imap_use_ssl", "BOOLEAN", "1"),
 ]
 
 CACHED_MODEL_COLUMNS = [

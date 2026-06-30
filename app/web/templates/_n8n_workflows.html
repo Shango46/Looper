@@ -1,0 +1,13 @@
+{% if workflows %}
+{% for wf in workflows %}
+<div class="log-entry flex-between">
+  <div>
+    <strong>{{ wf.name or "(unnamed)" }}</strong>
+    <span class="badge {{ 'active' if wf.active else 'fired' }}">{{ "active" if wf.active else "inactive" }}</span>
+    {% if wf.updatedAt %}<span class="muted">updated {{ wf.updatedAt[:10] }}</span>{% endif %}
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="muted">No workflows yet — open n8n to create your first one, or use a template above.</div>
+{% endif %}

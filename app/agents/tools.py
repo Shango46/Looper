@@ -130,9 +130,10 @@ TOOL_IMPLS = {
 def get_tools_for(agent: Agent, active_children: list[Agent] | None = None) -> list[dict]:
     """Dynamic tool schema composition. Skill-derived tools are layered on in loop.py."""
     from app.agents.browser import BROWSER_SCHEMAS
+    from app.agents.company_tools import COMPANY_TOOL_SCHEMAS
     from app.agents.delegation import REPORT_TO_SUPERVISOR_SCHEMA, build_delegate_schema
 
-    schemas = [FILE_READ_SCHEMA, FILE_WRITE_SCHEMA, FILE_LIST_SCHEMA, SHELL_EXEC_SCHEMA] + BROWSER_SCHEMAS
+    schemas = [FILE_READ_SCHEMA, FILE_WRITE_SCHEMA, FILE_LIST_SCHEMA, SHELL_EXEC_SCHEMA] + BROWSER_SCHEMAS + COMPANY_TOOL_SCHEMAS
     if active_children:
         schemas.append(build_delegate_schema(active_children))
     if agent.parent_agent_id is not None:
