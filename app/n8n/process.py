@@ -20,15 +20,30 @@ _proc: subprocess.Popen | None = None
 
 
 def _find_n8n() -> str | None:
-    found = shutil.which("n8n")
+    # Augment PATH with user-local bin dirs so shutil.which can find user-installed n8n
+    home = Path.home()
+    extra_paths = [
+        str(home / ".local" / "bin"),    # Linux: npm prefix ~/.local used by install.sh
+        str(home / ".nvm" / "versions"),  # nvm — shutil.which won't recurse, but shlex PATH will
+    ]
+    env_path = os.environ.get("PATH", "")
+    augmented = os.pathsep.join(extra_paths) + os.pathsep + env_path
+    found = shutil.which("n8n", path=augmented)
     if found:
         return found
+    # Explicit fallback locations
+    candidates: list[Path] = [
+        home / ".local" / "bin" / "n8n",
+        Path("/usr/local/bin/n8n"),
+        Path("/usr/bin/n8n"),
+    ]
     if sys.platform == "win32":
         appdata = os.environ.get("APPDATA", "")
         for name in ("n8n.cmd", "n8n"):
-            candidate = Path(appdata) / "npm" / name
-            if candidate.exists():
-                return str(candidate)
+            candidates.append(Path(appdata) / "npm" / name)
+    for c in candidates:
+        if c.exists():
+            return str(c)
     return None
 
 
@@ -83,6 +98,9 @@ def start_n8n() -> bool:
         "N8N_HIRING_BANNER_ENABLED": "false",
         "N8N_VERSION_NOTIFICATIONS_ENABLED": "false",
         "N8N_DIAGNOSTICS_ENABLED": "false",
+        # Tell n8n not to show the first-run owner-setup wizard — Looper creates the
+        # owner account programmatically via the REST API in n8n_client.ensure_setup().
+        "N8N_SKIP_OWNER_SETUP": "true",
         "WEBHOOK_URL": N8N_URL,
     }
 

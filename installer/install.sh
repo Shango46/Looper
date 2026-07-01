@@ -146,16 +146,14 @@ if [ -z "$PYTHON311" ]; then
     case "$PKG_MANAGER" in
         apt)
             sudo apt-get update -qq
-            # Try standard repos first (available in Ubuntu 24.04/Mint 22)
+            # Try standard repos first. Ubuntu 24.04 / Mint 22.x include python3.11
+            # but may not have python3.11-venv in the default package list.
             if ! sudo apt-get install -y python3.11 python3.11-venv python3.11-dev 2>/dev/null; then
-                log "Not in standard repos. Adding deadsnakes PPA..."
+                log "python3.11 not in standard repos. Adding deadsnakes PPA..."
                 sudo apt-get install -y software-properties-common
                 sudo add-apt-repository -y ppa:deadsnakes/ppa
                 sudo apt-get update -qq
                 sudo apt-get install -y python3.11 python3.11-venv python3.11-dev
-            else
-                # Ensure venv is installed even if base was already present
-                sudo apt-get install -y python3.11-venv python3.11-dev 2>/dev/null || true
             fi
             PYTHON311="$(command -v python3.11)"
             ;;
@@ -263,8 +261,18 @@ fi
 step "Installing n8n"
 
 if [ "$NODE_OK" = true ] && command -v npm &>/dev/null; then
-    log "Installing n8n globally (this may take a few minutes)..."
-    npm install -g n8n --quiet 2>/dev/null && log "n8n installed." \
+    # Configure npm to install to ~/.local so no sudo is needed on systems where
+    # npm was installed via apt (which defaults to /usr/lib/node_modules, root-only).
+    npm config set prefix "$HOME/.local" 2>/dev/null || true
+
+    # Add ~/.local/bin to PATH now in case it wasn't there already
+    export PATH="$HOME/.local/bin:$PATH"
+
+    log "Installing n8n globally to ~/.local (this may take a few minutes)..."
+    # --legacy-peer-deps: n8n 2.x has peer dependency conflicts in its dependency
+    # tree (zod version mismatches); these are internal to n8n and safe to override.
+    npm install -g n8n --legacy-peer-deps --quiet 2>/dev/null \
+        && log "n8n installed." \
         || warn "n8n install had warnings — automations may still work."
 else
     warn "Skipping n8n install (Node.js not available)."
