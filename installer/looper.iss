@@ -49,6 +49,7 @@ Source: "..\VERSION"; DestDir: "{app}"; Flags: ignoreversion
 
 ; ── Installer assets ──────────────────────────────────────────────────────────
 Source: "assets\launcher.pyw"; DestDir: "{app}"; Flags: ignoreversion
+Source: "assets\looper.vbs"; DestDir: "{app}"; Flags: ignoreversion
 Source: "assets\post_install.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "assets\looper.ico"; DestDir: "{app}"; Flags: ignoreversion
 
@@ -57,17 +58,17 @@ Source: "assets\looper.ico"; DestDir: "{app}"; Flags: ignoreversion
 Type: filesandordirs; Name: "{app}\.venv"
 
 [Icons]
-; Start Menu shortcut
+; Start Menu shortcut — uses VBS wrapper so no CMD flash and graceful error if venv missing
 Name: "{group}\Looper"; \
-    Filename: "{app}\.venv\Scripts\pythonw.exe"; \
-    Parameters: """{app}\launcher.pyw"""; \
+    Filename: "wscript.exe"; \
+    Parameters: """{app}\looper.vbs"""; \
     WorkingDir: "{app}"; \
     IconFilename: "{app}\looper.ico"
 
 ; Desktop shortcut (optional, controlled by Tasks)
 Name: "{userdesktop}\Looper"; \
-    Filename: "{app}\.venv\Scripts\pythonw.exe"; \
-    Parameters: """{app}\launcher.pyw"""; \
+    Filename: "wscript.exe"; \
+    Parameters: """{app}\looper.vbs"""; \
     WorkingDir: "{app}"; \
     IconFilename: "{app}\looper.ico"; \
     Tasks: desktopicon
@@ -78,11 +79,12 @@ Name: "{group}\Uninstall Looper"; \
 
 [Run]
 ; Offer "Launch Looper now" on the final wizard page
+; skipifdoesntexist: silently skips if post_install.ps1 failed to create the venv
 Filename: "{app}\.venv\Scripts\pythonw.exe"; \
     Parameters: """{app}\launcher.pyw"""; \
     Description: "{cm:LaunchProgram,{#MyAppName}}"; \
     WorkingDir: "{app}"; \
-    Flags: postinstall nowait skipifsilent
+    Flags: postinstall nowait skipifsilent skipifdoesntexist
 
 [Code]
 var
