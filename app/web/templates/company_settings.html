@@ -5,6 +5,8 @@
 <div class="card" style="margin-top:16px;">
   <h3>Company Settings</h3>
   <form method="post" action="/companies/{{ company.id }}/settings">
+    <label>Company name</label>
+    <input name="name" value="{{ company.name }}" required>
     <label>Folder</label>
     <input name="folder_path" value="{{ company.folder_path }}" required>
     <label>OpenRouter API key (leave blank to keep current)</label>

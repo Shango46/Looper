@@ -93,10 +93,26 @@ class Agent(Base):
         back_populates="agent", cascade="all, delete-orphan", order_by="AgentMemoryEntry.id"
     )
     skill_grants: Mapped[list["SkillGrant"]] = relationship(back_populates="agent", cascade="all, delete-orphan")
+    extra_manager_links: Mapped[list["AgentExtraManager"]] = relationship(
+        "AgentExtraManager",
+        foreign_keys="[AgentExtraManager.agent_id]",
+        cascade="all, delete-orphan",
+    )
 
     @property
     def is_ceo(self) -> bool:
         return self.parent_agent_id is None
+
+
+class AgentExtraManager(Base):
+    __tablename__ = "agent_extra_managers"
+    __table_args__ = (UniqueConstraint("agent_id", "manager_id", name="uq_extra_manager"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    agent_id: Mapped[int] = mapped_column(ForeignKey("agents.id"))
+    manager_id: Mapped[int] = mapped_column(ForeignKey("agents.id"))
+
+    manager: Mapped["Agent"] = relationship("Agent", foreign_keys="[AgentExtraManager.manager_id]")
 
 
 class AgentMemoryEntry(Base):

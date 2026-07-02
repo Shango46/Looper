@@ -7,7 +7,7 @@ from app.agents.lifecycle import LifecycleError
 from app.agents.lifecycle import edit_agent as edit_agent_lifecycle
 from app.agents.lifecycle import fire_agent as fire_agent_lifecycle
 from app.agents.lifecycle import replace_agent as replace_agent_lifecycle
-from app.db.models import Agent, AgentMemoryEntry, AgentTemplate, CachedModel, Company, Skill, SkillGrant
+from app.db.models import Agent, AgentExtraManager, AgentMemoryEntry, AgentTemplate, CachedModel, Company, Skill, SkillGrant
 from app.db.session import session_scope
 from app.web.templates_env import templates
 
@@ -18,7 +18,11 @@ router = APIRouter()
 async def agent_detail(request: Request, agent_id: int):
     async with session_scope() as session:
         agent = await session.get(
-            Agent, agent_id, options=[selectinload(Agent.parent), selectinload(Agent.children)]
+            Agent, agent_id, options=[
+                selectinload(Agent.parent),
+                selectinload(Agent.children),
+                selectinload(Agent.extra_manager_links).selectinload(AgentExtraManager.manager),
+            ]
         )
         if not agent:
             raise HTTPException(404, "Agent not found")

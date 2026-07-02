@@ -72,7 +72,18 @@
 
 <div class="card">
   <h3>Reporting structure</h3>
-  <div class="muted">Reports to: {% if agent.parent %}<a href="/agents/{{ agent.parent.id }}">{{ agent.parent.name }}</a>{% else %}Nobody (CEO){% endif %}</div>
+  {% if agent.is_ceo %}
+  <div class="muted">Reports to: Nobody (CEO)</div>
+  {% else %}
+  <div class="muted">
+    Reports to: <strong>{{ agent.parent.name }}</strong> ({{ agent.parent.title }})
+    {% if agent.extra_manager_links %}
+      {% for link in agent.extra_manager_links %}
+      &middot; <strong>{{ link.manager.name }}</strong> ({{ link.manager.title }})
+      {% endfor %}
+    {% endif %}
+  </div>
+  {% endif %}
   <div class="muted">Direct reports: {{ agent.children|selectattr("status", "ne", "fired")|list|length }}</div>
 </div>
 

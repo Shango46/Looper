@@ -11,11 +11,11 @@ from app.agents.lifecycle import create_task_for_ceo as create_task_for_ceo_life
 from app.agents.lifecycle import hire_agent as hire_agent_lifecycle
 from app.config import MAX_COMPANIES
 from app.crypto import encrypt
-from app.db.models import Agent, AgentTemplate, CachedModel, Company, McpServer, Settings, Task, WebSearchRecord
+from app.db.models import Agent, AgentExtraManager, AgentTemplate, CachedModel, Company, McpServer, Settings, Task, WebSearchRecord
 from app.db.session import session_scope
 from app.remote.auth import disable_remote_access, generate_code, rotate_code
 from app.remote.tailscale import get_tailscale_ip
-from app.web.org_tree import build_org_tree
+from app.web.org_tree import build_mermaid_chart, build_org_tree
 from app.web.templates_env import templates
 
 router = APIRouter()
@@ -140,8 +140,72 @@ async def resume_company(company_id: int):
     return RedirectResponse(f"/companies/{company_id}", status_code=303)
 
 
+@router.get("/companies/{company_id}/orgchart")
+async def company_orgchart(request: Request, company_id: int):
+    async with session_scope() as session:
+        company = await session.get(
+            Company, company_id,
+            options=[selectinload(Company.agents).selectinload(Agent.extra_manager_links)]
+        )
+        if not company:
+            raise HTTPException(404, "Company not found")
+        mermaid_chart = build_mermaid_chart(company.agents)
+    return templates.TemplateResponse(
+        "company_orgchart.html",
+        {"request": request, "company": company, "mermaid_chart": mermaid_chart},
+    )
+
+
+@router.post("/companies/{company_id}/orgchart/save-png")
+async def save_orgchart_png(company_id: int):
+    async with session_scope() as session:
+        company = await session.get(Company, company_id)
+        if not company:
+            raise HTTPException(404, "Company not found")
+        folder = company.folder_path
+    try:
+        from playwright.async_api import async_playwright
+        timestamp = dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        filename = f"orgchart_{timestamp}.png"
+        filepath = Path(folder) / filename
+        Path(folder).mkdir(parents=True, exist_ok=True)
+        async with async_playwright() as pw:
+            browser = await pw.chromium.launch(headless=True)
+            # Very large viewport so Mermaid renders the full chart unconstrained
+            page = await browser.new_page(viewport={"width": 6000, "height": 4000})
+            await page.goto(
+                f"http://127.0.0.1:8731/companies/{company_id}/orgchart",
+                wait_until="domcontentloaded",
+                timeout=15000,
+            )
+            await page.wait_for_selector(".mermaid svg", timeout=15000)
+            await page.wait_for_timeout(1000)
+            # Remove overflow clipping so the SVG can expand freely, then measure
+            dims = await page.evaluate("""() => {
+                const card = document.querySelector('.card');
+                if (card) { card.style.overflow = 'visible'; card.style.minHeight = 'unset'; }
+                const mermaidDiv = document.querySelector('.mermaid');
+                if (mermaidDiv) mermaidDiv.style.overflow = 'visible';
+                const svg = document.querySelector('.mermaid svg');
+                svg.style.maxWidth = 'none';
+                // getBoundingClientRect returns actual CSS pixel dimensions
+                const rect = svg.getBoundingClientRect();
+                return { width: Math.ceil(rect.width), height: Math.ceil(rect.height) };
+            }""")
+            w = max(dims["width"] + 60, 400)
+            h = max(dims["height"] + 60, 300)
+            await page.set_viewport_size({"width": w, "height": h})
+            await page.wait_for_timeout(300)
+            await page.locator(".mermaid svg").screenshot(path=str(filepath))
+            await browser.close()
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+    return {"ok": True, "filename": filename}
+
+
 @router.post("/companies/{company_id}/agents")
 async def create_agent(
+    request: Request,
     company_id: int,
     parent_agent_id: int = Form(...),
     name: str = Form(...),
@@ -149,11 +213,17 @@ async def create_agent(
     personality: str = Form(""),
     model_id: str = Form(...),
 ):
+    form = await request.form()
+    extra_ids = [int(v) for v in form.getlist("extra_manager_ids") if str(v).strip()]
+
     async with session_scope() as session:
         try:
-            await hire_agent_lifecycle(session, company_id, parent_agent_id, name, title, personality, model_id)
+            agent = await hire_agent_lifecycle(session, company_id, parent_agent_id, name, title, personality, model_id)
         except LifecycleError as e:
             raise HTTPException(400, str(e))
+        for mid in extra_ids:
+            if mid != parent_agent_id:
+                session.add(AgentExtraManager(agent_id=agent.id, manager_id=mid))
 
     return RedirectResponse(f"/companies/{company_id}", status_code=303)
 
@@ -263,20 +333,34 @@ async def disable_remote_code(company_id: int):
 @router.post("/companies/{company_id}/settings")
 async def update_company_settings(
     company_id: int,
+    name: str = Form(...),
     folder_path: str = Form(...),
     openrouter_api_key: str = Form(""),
     heartbeats_enabled: bool = Form(False),
     budget_usd_cap: str = Form(""),
 ):
+    new_name = name.strip()
+    try:
+        resolved = Path(folder_path).expanduser().resolve()
+        resolved.mkdir(parents=True, exist_ok=True)
+        resolved_path = str(resolved)
+    except OSError:
+        resolved_path = None
+    try:
+        budget = float(budget_usd_cap) if budget_usd_cap.strip() else None
+    except ValueError:
+        budget = None
+
     async with session_scope() as session:
         company = await session.get(Company, company_id)
         if not company:
             raise HTTPException(404, "Company not found")
-        resolved = Path(folder_path).expanduser().resolve()
-        resolved.mkdir(parents=True, exist_ok=True)
-        company.folder_path = str(resolved)
+        if new_name:
+            company.name = new_name
+        if resolved_path is not None:
+            company.folder_path = resolved_path
         company.heartbeats_enabled = heartbeats_enabled
-        company.budget_usd_cap = float(budget_usd_cap) if budget_usd_cap.strip() else None
+        company.budget_usd_cap = budget
         if openrouter_api_key.strip():
             company.openrouter_api_key_encrypted = encrypt(openrouter_api_key.strip())
     return RedirectResponse(f"/companies/{company_id}/settings", status_code=303)
