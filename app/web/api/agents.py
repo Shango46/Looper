@@ -8,7 +8,7 @@ from app.agents.lifecycle import edit_agent as edit_agent_lifecycle
 from app.agents.lifecycle import fire_agent as fire_agent_lifecycle
 from app.agents.lifecycle import hire_agent as hire_agent_lifecycle
 from app.agents.lifecycle import replace_agent as replace_agent_lifecycle
-from app.db.models import Agent, Skill, SkillGrant
+from app.db.models import Agent, AgentExtraManager, Skill, SkillGrant
 from app.db.session import session_scope
 from app.web.api.deps import get_authenticated_company_id
 from app.web.api.schemas import EditAgentRequest, HireAgentRequest, ChatMessageRequest, ReplaceAgentRequest
@@ -39,8 +39,15 @@ def _agent_summary(a: Agent) -> dict:
 @router.get("/agents/{agent_id}")
 async def get_agent(agent_id: int, company_id: int = Depends(get_authenticated_company_id)):
     async with session_scope() as session:
-        agent = await _get_owned_agent(session, company_id, agent_id, options=[selectinload(Agent.children)])
+        agent = await _get_owned_agent(session, company_id, agent_id, options=[
+            selectinload(Agent.children),
+            selectinload(Agent.extra_manager_links).selectinload(AgentExtraManager.manager),
+        ])
         children = [{"id": c.id, "name": c.name, "status": c.status} for c in agent.children if c.status != "fired"]
+        extra_managers = [
+            {"id": link.manager.id, "name": link.manager.name, "title": link.manager.title}
+            for link in agent.extra_manager_links
+        ]
 
         grants = (await session.execute(select(SkillGrant).where(SkillGrant.agent_id == agent_id))).scalars().all()
         skills = []
@@ -51,6 +58,7 @@ async def get_agent(agent_id: int, company_id: int = Depends(get_authenticated_c
 
         data = _agent_summary(agent)
         data["children"] = children
+        data["extra_managers"] = extra_managers
         data["skills"] = skills
         return data
 
