@@ -65,6 +65,28 @@ SHELL_EXEC_SCHEMA = {
     },
 }
 
+NOTE_READ_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": "note_read",
+        "description": "Read your personal long-term notes. These persist across all tasks so you can remember important context, decisions, or information for future work.",
+        "parameters": {"type": "object", "properties": {}, "required": []},
+    },
+}
+
+NOTE_WRITE_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": "note_write",
+        "description": "Overwrite your personal long-term notes with new content. Use this to remember important facts, decisions, or context that should persist across tasks. The content you write completely replaces any previous notes.",
+        "parameters": {
+            "type": "object",
+            "properties": {"content": {"type": "string", "description": "The full note content to save."}},
+            "required": ["content"],
+        },
+    },
+}
+
 MAX_FILE_READ_CHARS = 20000
 SHELL_TIMEOUT_SECONDS = 120
 
@@ -133,7 +155,7 @@ def get_tools_for(agent: Agent, active_children: list[Agent] | None = None) -> l
     from app.agents.company_tools import COMPANY_TOOL_SCHEMAS
     from app.agents.delegation import REPORT_TO_SUPERVISOR_SCHEMA, build_delegate_schema
 
-    schemas = [FILE_READ_SCHEMA, FILE_WRITE_SCHEMA, FILE_LIST_SCHEMA, SHELL_EXEC_SCHEMA] + BROWSER_SCHEMAS + COMPANY_TOOL_SCHEMAS
+    schemas = [FILE_READ_SCHEMA, FILE_WRITE_SCHEMA, FILE_LIST_SCHEMA, SHELL_EXEC_SCHEMA, NOTE_READ_SCHEMA, NOTE_WRITE_SCHEMA] + BROWSER_SCHEMAS + COMPANY_TOOL_SCHEMAS
     if active_children:
         schemas.append(build_delegate_schema(active_children))
     if agent.parent_agent_id is not None:

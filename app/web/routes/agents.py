@@ -106,6 +106,16 @@ async def edit_agent(
     return RedirectResponse(f"/agents/{agent_id}", status_code=303)
 
 
+@router.post("/agents/{agent_id}/notes")
+async def save_agent_notes(agent_id: int, notes: str = Form("")):
+    async with session_scope() as session:
+        agent = await session.get(Agent, agent_id)
+        if not agent:
+            raise HTTPException(404, "Agent not found")
+        agent.notes = notes or None
+    return RedirectResponse(f"/agents/{agent_id}", status_code=303)
+
+
 @router.post("/agents/{agent_id}/fire")
 async def fire_agent(agent_id: int):
     async with session_scope() as session:

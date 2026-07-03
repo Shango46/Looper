@@ -88,3 +88,17 @@ pre.code { background: #0b0d10; padding: 10px; border-radius: 6px; overflow-x: a
 .badge.cat-audio   { color: #84cc16; border-color: #84cc16; }
 .badge.cat-free    { color: var(--ok); border-color: var(--ok); }
 .badge.price-tag   { font-family: monospace; font-size: 11px; }
+
+/* Company sticky subnav */
+#company-subnav {
+  display: none; position: sticky; z-index: 80;
+  background: var(--panel); border-bottom: 1px solid var(--border);
+  overflow-x: auto; gap: 2px; padding: 6px 16px; flex-wrap: nowrap;
+}
+.subnav-link {
+  color: var(--muted); font-size: 13px; padding: 5px 10px;
+  border-radius: 6px; white-space: nowrap; flex-shrink: 0;
+  text-decoration: none; transition: background 0.15s, color 0.15s;
+}
+.subnav-link:hover { background: var(--panel-2); color: var(--text); }
+.subnav-link.active { color: var(--accent); background: var(--panel-2); font-weight: 600; }

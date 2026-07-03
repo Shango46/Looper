@@ -19,10 +19,38 @@
       <a href="/settings">Settings</a>
     </nav>
   </header>
+  <div id="company-subnav"></div>
   <main>
     {% block content %}{% endblock %}
   </main>
   {% block scripts %}{% endblock %}
   <script src="/static/approvals_watch.js"></script>
+  <script>
+  (function(){
+    var m = location.pathname.match(/^\/companies\/(\d+)/);
+    if (!m) return;
+    var id = m[1];
+    var bar = document.getElementById('company-subnav');
+    var links = [
+      ['📺 Live Activity', '/companies/'+id+'/activity'],
+      ['📊 Org Chart', '/companies/'+id+'/orgchart'],
+      ['Activity / Tasks', '/companies/'+id+'/tasks'],
+      ['📁 Files', '/companies/'+id+'/files'],
+      ['Heartbeats', '/companies/'+id+'/heartbeats'],
+      ['Automations (n8n)', '/companies/'+id+'/n8n'],
+      ['Knowledge Base (RAG)', '/companies/'+id+'/rag'],
+      ['Company Settings', '/companies/'+id+'/settings'],
+    ];
+    links.forEach(function(l){
+      var a = document.createElement('a');
+      a.href = l[1]; a.textContent = l[0]; a.className = 'subnav-link';
+      if (location.pathname === l[1] || location.pathname.startsWith(l[1]+'/')) a.classList.add('active');
+      bar.appendChild(a);
+    });
+    var hdr = document.querySelector('header.topbar');
+    bar.style.top = (hdr ? hdr.offsetHeight : 48) + 'px';
+    bar.style.display = 'flex';
+  })();
+  </script>
 </body>
 </html>

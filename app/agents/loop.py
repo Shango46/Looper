@@ -32,6 +32,8 @@ def build_system_prompt(agent: Agent, skill_instructions: str = "") -> str:
         "Use tools when you need to read, write, or inspect files. "
         "When you have finished the task (or cannot proceed), reply with plain text — do not call a tool just to announce completion.",
     ]
+    if agent.notes:
+        parts.append("Your long-term notes (use note_read/note_write to update these across tasks):\n\n" + agent.notes)
     if skill_instructions:
         parts.append("You have been granted the following skills:\n\n" + skill_instructions)
     return "\n\n".join(parts)
@@ -330,6 +332,26 @@ async def run_step(task_id: int) -> str:
                             )
                             result_str = f"Requested skill '{skill.name}'. Awaiting user approval."
                     await record_memory(session, agent_id, "tool", f"{name} -> {result_str}")
+                messages.append({"role": "tool", "tool_call_id": tc["id"], "name": name, "content": result_str})
+                continue
+
+            if name == "note_read":
+                async with session_scope() as session:
+                    agent_row = await session.get(Agent, agent_id)
+                    notes = agent_row.notes or ""
+                result_str = notes if notes else "(no notes yet — use note_write to save something)"
+                messages.append({"role": "tool", "tool_call_id": tc["id"], "name": name, "content": result_str})
+                async with session_scope() as session:
+                    await record_memory(session, agent_id, "tool", f"note_read -> {result_str[:200]}")
+                continue
+
+            if name == "note_write":
+                new_notes = args.get("content", "")
+                async with session_scope() as session:
+                    agent_row = await session.get(Agent, agent_id)
+                    agent_row.notes = new_notes
+                    await record_memory(session, agent_id, "tool", f"note_write -> saved {len(new_notes)} chars")
+                result_str = f"Notes saved ({len(new_notes)} chars)."
                 messages.append({"role": "tool", "tool_call_id": tc["id"], "name": name, "content": result_str})
                 continue
 

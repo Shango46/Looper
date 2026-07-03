@@ -207,6 +207,25 @@
   </div>
 </div>
 
+<div class="card" x-data="{ editing: false }">
+  <div class="flex-between">
+    <h3>Long-term Notes</h3>
+    {% if agent.status != 'fired' %}<button class="secondary" type="button" @click="editing = !editing" x-text="editing ? 'Cancel' : 'Edit'">Edit</button>{% endif %}
+  </div>
+  <template x-if="!editing">
+    <pre class="code" style="white-space:pre-wrap;min-height:40px;">{{ agent.notes or "(no notes yet)" }}</pre>
+  </template>
+  <template x-if="editing">
+    <form method="post" action="/agents/{{ agent.id }}/notes">
+      <textarea name="notes" rows="8" style="font-family:monospace;font-size:13px;">{{ agent.notes or "" }}</textarea>
+      <div class="row" style="margin-top:8px;">
+        <button type="submit">Save Notes</button>
+        <button type="button" class="secondary" @click="editing = false">Cancel</button>
+      </div>
+    </form>
+  </template>
+</div>
+
 {% if agent.status != 'fired' %}
 <form hx-post="/agents/{{ agent.id }}/fire" hx-target="body" onsubmit="return confirm('Fire {{ agent.name }}?');">
   <button type="submit" class="danger">Fire this agent</button>

@@ -75,6 +75,7 @@ class Agent(Base):
     name: Mapped[str] = mapped_column(String(200))
     title: Mapped[str] = mapped_column(String(200))
     personality: Mapped[str] = mapped_column(Text, default="")
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     model_id: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
 
     # active = working normally, vacant = slot exists but no agent assigned a model yet, fired = retired/historical

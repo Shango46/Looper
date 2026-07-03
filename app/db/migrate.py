@@ -33,6 +33,10 @@ CACHED_MODEL_COLUMNS = [
     ("modality", "VARCHAR(100)", "NULL"),
 ]
 
+AGENT_COLUMNS = [
+    ("notes", "TEXT", "NULL"),
+]
+
 SETTINGS_COLUMNS = [
     ("remote_access_enabled", "BOOLEAN", "0"),
 ]
@@ -69,5 +73,6 @@ async def run_lightweight_migrations(engine: AsyncEngine) -> None:
                     text(f"ALTER TABLE companies ADD COLUMN {column} {col_type} DEFAULT {default}")
                 )
 
+        await _migrate_table(conn, "agents", AGENT_COLUMNS)
         await _migrate_table(conn, "cached_models", CACHED_MODEL_COLUMNS)
         await _migrate_table(conn, "settings", SETTINGS_COLUMNS)
